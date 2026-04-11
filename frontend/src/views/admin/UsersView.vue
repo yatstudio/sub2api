@@ -3,7 +3,50 @@
     <TablePageLayout>
       <!-- Single Row: Search, Filters, and Actions -->
       <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-3 dark:border-indigo-900/40 dark:bg-indigo-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.totalDistributors') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ distributionOverview?.total_distributors ?? 0 }}</div>
+            </div>
+            <div class="rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-3 dark:border-indigo-900/40 dark:bg-indigo-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.totalBoundUsers') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ distributionOverview?.total_bound_users ?? 0 }}</div>
+            </div>
+            <div class="rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-3 dark:border-indigo-900/40 dark:bg-indigo-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.pendingWithdrawalCount') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ distributionOverview?.pending_withdrawal_count ?? 0 }}</div>
+            </div>
+            <div class="rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-3 dark:border-indigo-900/40 dark:bg-indigo-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.pendingWithdrawalAmount') }}</div>
+              <div class="mt-1 text-lg font-semibold">${{ toMoney(distributionOverview?.pending_withdrawal_amount) }}</div>
+            </div>
+          </div>
+
+          <div v-if="distributionOverview?.source_stats?.length" class="flex flex-wrap gap-2">
+            <span v-for="item in distributionOverview.source_stats" :key="item.source" class="inline-flex items-center gap-1 rounded-full border border-indigo-200 px-2.5 py-1 text-xs dark:border-indigo-900/50">
+              <span class="uppercase text-gray-500">{{ item.source }}</span>
+              <span class="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">{{ item.count }}</span>
+            </span>
+          </div>
+
+          <div v-if="distributionFunnel?.items?.length" class="rounded-xl border border-indigo-200/60 p-3 dark:border-indigo-900/40">
+            <div class="mb-2 text-xs font-semibold text-gray-500">{{ t('admin.users.distribution.funnel.title') }}</div>
+            <div class="grid grid-cols-1 gap-2 lg:grid-cols-2">
+              <div v-for="item in distributionFunnel.items" :key="item.source" class="rounded-lg border border-indigo-100 px-3 py-2 dark:border-indigo-900/30">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold uppercase">{{ item.source }}</span>
+                  <span class="text-indigo-600 dark:text-indigo-300">{{ toPercent(item.topup_rate) }}</span>
+                </div>
+                <div class="mt-1 text-[11px] text-gray-500">
+                  {{ t('admin.users.distribution.funnel.attributedUsers') }}: {{ item.attributed_users }} ·
+                  {{ t('admin.users.distribution.funnel.topupUsers') }}: {{ item.topup_users }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
           <!-- Left: Search + Active Filters -->
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <!-- Search Box -->
@@ -231,6 +274,7 @@
             </button>
           </div>
         </div>
+      </div>
       </template>
 
       <!-- Users Table -->
@@ -567,6 +611,15 @@
                 {{ t('admin.users.balanceHistory') }}
               </button>
 
+              <!-- Distribution Ops -->
+              <button
+                @click="handleDistribution(user); closeActionMenu()"
+                class="flex w-full items-center gap-2 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
+              >
+                <Icon name="users" size="sm" class="text-indigo-500" :stroke-width="2" />
+                {{ t('admin.users.distribution.entry') }}
+              </button>
+
               <div class="my-1 border-t border-gray-100 dark:border-dark-700"></div>
 
               <!-- Delete (not for admin) -->
@@ -591,6 +644,7 @@
     <UserAllowedGroupsModal :show="showAllowedGroupsModal" :user="allowedGroupsUser" @close="closeAllowedGroupsModal" @success="loadUsers" />
     <UserBalanceModal :show="showBalanceModal" :user="balanceUser" :operation="balanceOperation" @close="closeBalanceModal" @success="loadUsers" />
     <UserBalanceHistoryModal :show="showBalanceHistoryModal" :user="balanceHistoryUser" @close="closeBalanceHistoryModal" @deposit="handleDepositFromHistory" @withdraw="handleWithdrawFromHistory" />
+    <UserDistributionModal :show="showDistributionModal" :user="distributionUser" @close="closeDistributionModal" />
     <GroupReplaceModal :show="showGroupReplaceModal" :user="groupReplaceUser" :old-group="groupReplaceOldGroup" :all-groups="allGroups" @close="closeGroupReplaceModal" @success="loadUsers" />
     <UserAttributesConfigModal :show="showAttributesModal" @close="handleAttributesModalClose" />
   </AppLayout>
@@ -607,6 +661,7 @@ import Icon from '@/components/icons/Icon.vue'
 const { t } = useI18n()
 import { adminAPI } from '@/api/admin'
 import type { AdminUser, AdminGroup, UserAttributeDefinition } from '@/types'
+import type { DistributionOverview, DistributionFunnel } from '@/api/admin/users'
 import type { BatchUserUsageStats } from '@/api/admin/dashboard'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -625,6 +680,7 @@ import UserApiKeysModal from '@/components/admin/user/UserApiKeysModal.vue'
 import UserAllowedGroupsModal from '@/components/admin/user/UserAllowedGroupsModal.vue'
 import UserBalanceModal from '@/components/admin/user/UserBalanceModal.vue'
 import UserBalanceHistoryModal from '@/components/admin/user/UserBalanceHistoryModal.vue'
+import UserDistributionModal from '@/components/admin/user/UserDistributionModal.vue'
 import GroupReplaceModal from '@/components/admin/user/GroupReplaceModal.vue'
 
 const appStore = useAppStore()
@@ -774,6 +830,11 @@ const columns = computed<Column[]>(() =>
 const users = ref<AdminUser[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
+const distributionOverview = ref<DistributionOverview | null>(null)
+const distributionFunnel = ref<DistributionFunnel | null>(null)
+
+const toMoney = (value?: number) => Number(value || 0).toFixed(2)
+const toPercent = (value?: number) => `${Math.round(Number(value || 0) * 100)}%`
 
 // Groups data for the groups column
 const allGroups = ref<AdminGroup[]>([])
@@ -1078,6 +1139,9 @@ const balanceOperation = ref<'add' | 'subtract'>('add')
 const showBalanceHistoryModal = ref(false)
 const balanceHistoryUser = ref<AdminUser | null>(null)
 
+const showDistributionModal = ref(false)
+const distributionUser = ref<AdminUser | null>(null)
+
 // 计算剩余天数
 const getDaysRemaining = (expiresAt: string): number => {
   const now = new Date()
@@ -1094,6 +1158,19 @@ const loadAttributeDefinitions = async () => {
   }
 }
 
+const loadDistributionOverview = async () => {
+  try {
+    const [overview, funnel] = await Promise.all([
+      adminAPI.users.getDistributionOverview(),
+      adminAPI.users.getDistributionFunnel()
+    ])
+    distributionOverview.value = overview
+    distributionFunnel.value = funnel
+  } catch (e) {
+    console.error('Failed to load distribution overview:', e)
+  }
+}
+
 // Handle attributes modal close - reload definitions and users
 const handleAttributesModalClose = async () => {
   showAttributesModal.value = false
@@ -1107,6 +1184,7 @@ const loadUsers = async () => {
   abortController = currentAbortController
   const { signal } = currentAbortController
   loading.value = true
+  void loadDistributionOverview()
   try {
     // Build attribute filters from active filters
     const attrFilters: Record<number, string> = {}
@@ -1332,6 +1410,16 @@ const handleBalanceHistory = (user: AdminUser) => {
 const closeBalanceHistoryModal = () => {
   showBalanceHistoryModal.value = false
   balanceHistoryUser.value = null
+}
+
+const handleDistribution = (user: AdminUser) => {
+  distributionUser.value = user
+  showDistributionModal.value = true
+}
+
+const closeDistributionModal = () => {
+  showDistributionModal.value = false
+  distributionUser.value = null
 }
 
 // Handle deposit from balance history modal
