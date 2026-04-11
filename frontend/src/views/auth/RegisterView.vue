@@ -356,6 +356,9 @@ const formData = reactive({
   invitation_code: ''
 })
 
+const distributionInviteCode = ref<string>('')
+const distributionInviteSource = ref<string>('direct')
+
 const errors = reactive({
   email: '',
   password: '',
@@ -388,6 +391,21 @@ onMounted(async () => {
         // Validate the promo code from URL
         await validatePromoCodeDebounced(promoParam)
       }
+    }
+
+    const inviteCodeParam = String(
+      route.query.invite_code || route.query.invite || route.query.code || ''
+    ).trim()
+    if (inviteCodeParam) {
+      distributionInviteCode.value = inviteCodeParam
+    }
+
+    const sourceParam = String(route.query.src || route.query.utm_source || '')
+      .trim()
+      .toLowerCase()
+      .slice(0, 32)
+    if (sourceParam) {
+      distributionInviteSource.value = sourceParam
     }
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -690,7 +708,9 @@ async function handleRegister(): Promise<void> {
           password: formData.password,
           turnstile_token: turnstileToken.value,
           promo_code: formData.promo_code || undefined,
-          invitation_code: formData.invitation_code || undefined
+          invitation_code: formData.invitation_code || undefined,
+          distribution_invite_code: distributionInviteCode.value || undefined,
+          distribution_invite_source: distributionInviteSource.value || undefined
         })
       )
 
@@ -705,7 +725,9 @@ async function handleRegister(): Promise<void> {
       password: formData.password,
       turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
       promo_code: formData.promo_code || undefined,
-      invitation_code: formData.invitation_code || undefined
+      invitation_code: formData.invitation_code || undefined,
+      distribution_invite_code: distributionInviteCode.value || undefined,
+      distribution_invite_source: distributionInviteSource.value || undefined
     })
 
     // Show success toast

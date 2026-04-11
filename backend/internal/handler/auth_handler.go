@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"regexp"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -40,12 +41,27 @@ func NewAuthHandler(cfg *config.Config, authService *service.AuthService, userSe
 
 // RegisterRequest represents the registration request payload
 type RegisterRequest struct {
-	Email          string `json:"email" binding:"required,email"`
-	Password       string `json:"password" binding:"required,min=6"`
-	VerifyCode     string `json:"verify_code"`
-	TurnstileToken string `json:"turnstile_token"`
-	PromoCode      string `json:"promo_code"`      // 注册优惠码
-	InvitationCode string `json:"invitation_code"` // 邀请码
+	Email                    string `json:"email" binding:"required,email"`
+	Password                 string `json:"password" binding:"required,min=6"`
+	VerifyCode               string `json:"verify_code"`
+	TurnstileToken           string `json:"turnstile_token"`
+	PromoCode                string `json:"promo_code"`                  // 注册优惠码
+	InvitationCode           string `json:"invitation_code"`             // 邀请码
+	DistributionInviteCode   string `json:"distribution_invite_code"`    // 分销邀请码
+	DistributionInviteSource string `json:"distribution_invite_source"`  // 分销来源
+}
+
+var distributionSourcePattern = regexp.MustCompile(`^[a-z0-9_-]{1,32}$`)
+
+func normalizeDistributionInviteSource(source string) string {
+	normalized := strings.ToLower(strings.TrimSpace(source))
+	if normalized == "" {
+		return "direct"
+	}
+	if !distributionSourcePattern.MatchString(normalized) {
+		return "direct"
+	}
+	return normalized
 }
 
 // SendVerifyCodeRequest 发送验证码请求
@@ -123,6 +139,18 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
+	}
+
+	distributionInviteCode := strings.TrimSpace(req.DistributionInviteCode)
+	distributionInviteSource := normalizeDistributionInviteSource(req.DistributionInviteSource)
+	if distributionInviteCode != "" {
+		if err := h.userService.BindInviterByInviteCode(c.Request.Context(), user.ID, distributionInviteCode); err != nil {
+			slog.Warn("failed to bind distribution inviter during registration", "user_id", user.ID, "invite_code", distributionInviteCode, "error", err)
+		} else {
+			if attrErr := h.userService.UpsertDistributionInviteAttribution(c.Request.Context(), user.ID, distributionInviteCode, distributionInviteSource); attrErr != nil {
+				slog.Warn("failed to upsert distribution invite attribution", "user_id", user.ID, "invite_code", distributionInviteCode, "source", distributionInviteSource, "error", attrErr)
+			}
+		}
 	}
 
 	h.respondWithTokenPair(c, user)
