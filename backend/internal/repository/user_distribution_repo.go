@@ -24,8 +24,11 @@ const (
 	distributionWithdrawalStatusApproved = "approved"
 	distributionWithdrawalStatusRejected = "rejected"
 
-	minDistributionWithdrawalAmount = 10.0
-	distributionWithdrawalDailyLimit = 1
+	minDistributionWithdrawalAmount      = 10.0
+	distributionWithdrawalDailyLimit     = 1
+	maxDistributionAccountTypeLength     = 32
+	maxDistributionAccountRefLength      = 128
+	maxDistributionWithdrawalNotesLength = 200
 )
 
 func (r *userRepository) GetDistributionProfile(ctx context.Context, userID int64) (*service.DistributionProfile, error) {
@@ -588,8 +591,25 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 	if amount < minDistributionWithdrawalAmount {
 		return nil, service.ErrDistributionWithdrawalAmountTooSmall
 	}
-	if strings.TrimSpace(accountRef) == "" {
+
+	accountType = strings.TrimSpace(accountType)
+	accountRef = strings.TrimSpace(accountRef)
+	notes = strings.TrimSpace(notes)
+
+	if accountType == "" {
+		return nil, service.ErrDistributionWithdrawalAccountTypeRequired
+	}
+	if accountRef == "" {
 		return nil, service.ErrDistributionWithdrawalAccountRequired
+	}
+	if len(accountType) > maxDistributionAccountTypeLength {
+		return nil, service.ErrDistributionWithdrawalAccountTypeTooLong
+	}
+	if len(accountRef) > maxDistributionAccountRefLength {
+		return nil, service.ErrDistributionWithdrawalAccountRefTooLong
+	}
+	if len(notes) > maxDistributionWithdrawalNotesLength {
+		return nil, service.ErrDistributionWithdrawalNotesTooLong
 	}
 	if err := r.ensureDistributionProfile(ctx, userID); err != nil {
 		return nil, err
@@ -667,7 +687,7 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 		)
 		VALUES ($1, $2::DECIMAL(20,8), NULLIF($3, ''), $4, NULLIF($5, ''), $6)
 		RETURNING id, user_id, amount, COALESCE(account_type, ''), account_ref, status, COALESCE(notes, ''), created_at, updated_at
-	`, userID, amount, strings.TrimSpace(accountType), strings.TrimSpace(accountRef), strings.TrimSpace(notes), distributionWithdrawalStatusPending).Scan(
+	`, userID, amount, accountType, accountRef, notes, distributionWithdrawalStatusPending).Scan(
 		&item.ID,
 		&item.UserID,
 		&item.Amount,
