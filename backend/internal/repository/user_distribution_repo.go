@@ -23,6 +23,9 @@ const (
 	distributionWithdrawalStatusPending  = "pending"
 	distributionWithdrawalStatusApproved = "approved"
 	distributionWithdrawalStatusRejected = "rejected"
+
+	minDistributionWithdrawalAmount = 10.0
+	distributionWithdrawalDailyLimit = 1
 )
 
 func (r *userRepository) GetDistributionProfile(ctx context.Context, userID int64) (*service.DistributionProfile, error) {
@@ -144,11 +147,46 @@ func (r *userRepository) GetDistributionSummary(ctx context.Context, userID int6
 	return &summary, nil
 }
 
+func (r *userRepository) GetDistributionOverview(ctx context.Context) (*service.DistributionOverview, error) {
+	overview := &service.DistributionOverview{}
+
+	if err := scanSingleRow(ctx, r.sql, `
+		SELECT COUNT(1)
+		FROM user_distributions
+	`, nil, &overview.TotalDistributors); err != nil {
+		return nil, err
+	}
+
+	if err := scanSingleRow(ctx, r.sql, `
+		SELECT COUNT(1)
+		FROM user_distributions
+		WHERE inviter_user_id IS NOT NULL
+	`, nil, &overview.TotalBoundUsers); err != nil {
+		return nil, err
+	}
+
+	if err := scanSingleRow(ctx, r.sql, `
+		SELECT COUNT(1), COALESCE(SUM(amount), 0)::DECIMAL(20,8)
+		FROM distribution_withdrawals
+		WHERE status = $1
+	`, []any{distributionWithdrawalStatusPending}, &overview.PendingWithdrawalCount, &overview.PendingWithdrawalAmount); err != nil {
+		return nil, err
+	}
+
+	sourceStats, err := r.ListDistributionSourceStats(ctx, 0)
+	if err != nil {
+		return nil, err
+	}
+	overview.SourceStats = sourceStats
+
+	return overview, nil
+}
+
 func (r *userRepository) ListDistributionSourceStats(ctx context.Context, inviterUserID int64) ([]service.DistributionSourceStat, error) {
 	rows, err := r.sql.QueryContext(ctx, `
 		SELECT COALESCE(source, 'direct') AS source, COUNT(1)
 		FROM distribution_invite_attributions
-		WHERE inviter_user_id = $1
+		WHERE ($1 = 0 OR inviter_user_id = $1)
 		GROUP BY COALESCE(source, 'direct')
 		ORDER BY COUNT(1) DESC, source ASC
 	`, inviterUserID)
@@ -186,10 +224,13 @@ func normalizeDistributionSource(source string) string {
 	if s == "" {
 		return "direct"
 	}
-	if len(s) > 32 {
-		s = s[:32]
+
+	switch s {
+	case "direct", "wechat", "telegram", "discord", "x", "youtube", "website", "group", "campaign", "referral":
+		return s
+	default:
+		return "direct"
 	}
-	return s
 }
 
 func (r *userRepository) UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source string) error {
@@ -544,6 +585,9 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 	if amount <= 0 {
 		return nil, service.ErrDistributionWithdrawalAmountInvalid
 	}
+	if amount < minDistributionWithdrawalAmount {
+		return nil, service.ErrDistributionWithdrawalAmountTooSmall
+	}
 	if strings.TrimSpace(accountRef) == "" {
 		return nil, service.ErrDistributionWithdrawalAccountRequired
 	}
@@ -591,6 +635,19 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 
 	if pendingCount > 0 {
 		return nil, service.ErrDistributionWithdrawalPendingExists
+	}
+
+	var dailyCount int64
+	if err := tx.QueryRowContext(ctx, `
+		SELECT COUNT(1)
+		FROM distribution_withdrawal_requests
+		WHERE user_id = $1
+		  AND created_at >= NOW() - INTERVAL '24 hours'
+	`, userID).Scan(&dailyCount); err != nil {
+		return nil, err
+	}
+	if dailyCount >= distributionWithdrawalDailyLimit {
+		return nil, service.ErrDistributionWithdrawalDailyLimit
 	}
 
 	available := totalEarned - totalWithdrawn - pendingAmount

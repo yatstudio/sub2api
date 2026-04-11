@@ -17,6 +17,8 @@ var (
 	ErrDistributionCommissionRateInvalid     = infraerrors.BadRequest("DISTRIBUTION_COMMISSION_RATE_INVALID", "commission rate must be between 0 and 1")
 	ErrDistributionUnsupportedRepo           = infraerrors.InternalServer("DISTRIBUTION_REPOSITORY_UNSUPPORTED", "distribution repository capability is unavailable")
 	ErrDistributionWithdrawalAmountInvalid   = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_AMOUNT_INVALID", "withdrawal amount must be greater than 0")
+	ErrDistributionWithdrawalAmountTooSmall  = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_AMOUNT_TOO_SMALL", "withdrawal amount is below minimum")
+	ErrDistributionWithdrawalDailyLimit      = infraerrors.TooManyRequests("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT", "daily withdrawal request limit reached")
 	ErrDistributionWithdrawalAccountRequired = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_ACCOUNT_REQUIRED", "withdrawal account is required")
 	ErrDistributionWithdrawalInsufficient    = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_INSUFFICIENT", "insufficient available commission")
 	ErrDistributionWithdrawalPendingExists   = infraerrors.Conflict("DISTRIBUTION_WITHDRAWAL_PENDING_EXISTS", "an existing pending withdrawal request must be reviewed first")
@@ -74,6 +76,14 @@ type DistributionSourceStat struct {
 	Count  int64  `json:"count"`
 }
 
+type DistributionOverview struct {
+	TotalDistributors      int64                  `json:"total_distributors"`
+	TotalBoundUsers        int64                  `json:"total_bound_users"`
+	PendingWithdrawalCount int64                  `json:"pending_withdrawal_count"`
+	PendingWithdrawalAmount float64               `json:"pending_withdrawal_amount"`
+	SourceStats            []DistributionSourceStat `json:"source_stats,omitempty"`
+}
+
 type DistributionSummary struct {
 	UserID                   int64                    `json:"user_id"`
 	InviteCode               string                   `json:"invite_code"`
@@ -121,6 +131,7 @@ type DistributionCommissionResult struct {
 type UserDistributionRepository interface {
 	GetDistributionProfile(ctx context.Context, userID int64) (*DistributionProfile, error)
 	GetDistributionSummary(ctx context.Context, userID int64) (*DistributionSummary, error)
+	GetDistributionOverview(ctx context.Context) (*DistributionOverview, error)
 	BindInviterByInviteCode(ctx context.Context, userID int64, inviteCode string) error
 	ListDistributionReferrals(ctx context.Context, userID int64, params pagination.PaginationParams) ([]DistributionReferral, *pagination.PaginationResult, error)
 	ListDistributionTeam(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionTeamMember, *pagination.PaginationResult, error)
