@@ -23,6 +23,21 @@
             </div>
           </div>
 
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div class="rounded-xl border border-amber-200/70 bg-amber-50/40 p-3 dark:border-amber-900/40 dark:bg-amber-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.pendingAvgAgeHours') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ Number(distributionOverview?.pending_avg_age_hours || 0).toFixed(1) }}h</div>
+            </div>
+            <div class="rounded-xl border border-amber-200/70 bg-amber-50/40 p-3 dark:border-amber-900/40 dark:bg-amber-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.dailyReviewCount') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ distributionOverview?.daily_review_count ?? 0 }}</div>
+            </div>
+            <div class="rounded-xl border border-amber-200/70 bg-amber-50/40 p-3 dark:border-amber-900/40 dark:bg-amber-900/10">
+              <div class="text-xs text-gray-500">{{ t('admin.users.distribution.overview.approveRate7d') }}</div>
+              <div class="mt-1 text-lg font-semibold">{{ toPercent(distributionOverview?.approve_rate_7d) }}</div>
+            </div>
+          </div>
+
           <div v-if="distributionOverview?.source_stats?.length" class="flex flex-wrap gap-2">
             <span v-for="item in distributionOverview.source_stats" :key="item.source" class="inline-flex items-center gap-1 rounded-full border border-indigo-200 px-2.5 py-1 text-xs dark:border-indigo-900/50">
               <span class="uppercase text-gray-500">{{ item.source }}</span>
@@ -1165,7 +1180,13 @@ const loadDistributionOverview = async () => {
       adminAPI.users.getDistributionFunnel()
     ])
     distributionOverview.value = overview
-    distributionFunnel.value = funnel
+    distributionFunnel.value = {
+      items: [...(funnel.items || [])].sort((a, b) => {
+        if (b.topup_rate !== a.topup_rate) return b.topup_rate - a.topup_rate
+        if (b.topup_users !== a.topup_users) return b.topup_users - a.topup_users
+        return b.attributed_users - a.attributed_users
+      })
+    }
   } catch (e) {
     console.error('Failed to load distribution overview:', e)
   }
