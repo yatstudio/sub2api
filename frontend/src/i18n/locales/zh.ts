@@ -332,6 +332,7 @@ export default {
     apiKeys: 'API 密钥',
     usage: '使用记录',
     redeem: '兑换',
+    distribution: '分销中心',
     profile: '个人资料',
     users: '用户管理',
     groups: '分组管理',
@@ -607,6 +608,7 @@ export default {
         geminiCli: 'Gemini CLI',
         codexCli: 'Codex CLI',
         codexCliWs: 'Codex CLI (WebSocket)',
+        openclaw: 'OpenClaw',
         opencode: 'OpenCode'
       },
       antigravity: {
@@ -628,6 +630,11 @@ export default {
         title: 'OpenCode 配置示例',
         subtitle: 'opencode.json',
         hint: '配置文件路径：~/.config/opencode/opencode.json（或 opencode.jsonc），不存在需手动创建。可使用默认 provider（openai/anthropic/google）或自定义 provider_id。API Key 支持直接配置或通过客户端 /connect 命令配置。示例仅供参考，模型与选项可按需调整。'
+      },
+      openclaw: {
+        description: '将以下配置写入 OpenClaw 配置文件即可使用当前密钥访问模型。',
+        note: '如果本机已存在 ~/.openclaw/openclaw.json，请先备份再合并配置，避免覆盖你原有的 provider 设置。',
+        hint: '建议先备份旧配置文件，再将 provider 配置合并到 models.providers 下。'
       }
     },
     customKeyLabel: '自定义密钥',
@@ -886,6 +893,57 @@ export default {
       codeSent: '验证码已发送到您的邮箱',
       sendCodeFailed: '发送验证码失败'
     }
+  },
+
+  distribution: {
+    title: '分销中心',
+    description: '管理邀请码、团队、佣金和提现',
+    inviteCode: '邀请码',
+    inviterUserId: '邀请人用户 ID',
+    unbound: '未绑定',
+    bindInviteCode: '绑定邀请人',
+    bindPlaceholder: '输入邀请人的邀请码',
+    bindButton: '绑定',
+    binding: '绑定中...',
+    bindSuccess: '绑定邀请人成功',
+    availableCommission: '可提现佣金',
+    totalCommissionEarned: '累计佣金收入',
+    totalWithdrawn: '累计已提现',
+    pendingWithdrawal: '待审核提现',
+    thisMonthCommission: '本月佣金',
+    level1Team: '一级团队',
+    level2Team: '二级团队',
+    teamContribution: '团队总贡献',
+    withdrawalTitle: '发起提现申请',
+    amount: '金额',
+    accountType: '账户类型',
+    accountRef: '收款账号',
+    notes: '备注',
+    submitWithdrawal: '提交提现',
+    submitting: '提交中...',
+    withdrawalSuccess: '提现申请已创建',
+    channelStats: '渠道转化分布',
+    weeklyGoals: '本周目标',
+    goalReferrals: '新增邀请人数',
+    goalContribution: '团队贡献目标',
+    goalWithdrawable: '可提现目标',
+    promoKit: '推广素材包',
+    copyWeChatPitch: '复制私聊话术',
+    copyGroupPitch: '复制群发话术',
+    copyInviteLink: '复制邀请链接',
+    copySuccess: '已复制到剪贴板',
+    wechatPitchTemplate: '你好，我在用 Sub2API 做 AI 服务分发，这里是我的邀请链接：{link}。注册后可快速开始，有问题我可以一对一协助。',
+    groupPitchTemplate: '大家好，分享一个我在用的 AI 服务分发平台 Sub2API，注册链接：{link}。支持邀请返佣和团队管理。',
+    referralsTitle: '直属邀请列表',
+    teamTitle: '团队成员',
+    commissionsTitle: '佣金记录',
+    all: '全部',
+    withdrawalsTitle: '提现记录',
+    noData: '暂无数据',
+    loadFailed: '加载分销数据失败',
+    statusPending: '待审核',
+    statusApproved: '已通过',
+    statusRejected: '已拒绝'
   },
 
   // Empty States
@@ -1377,6 +1435,27 @@ export default {
       apiKeys: 'API密钥',
       userApiKeys: '用户 API 密钥',
       noApiKeys: '此用户暂无 API 密钥',
+      distribution: {
+        entry: '分销运营',
+        title: '分销运营台',
+        commissionRate: '分销佣金比例',
+        reviewNotePrompt: '请输入审核备注（可留空）',
+        batchApprove: '批量通过',
+        batchReject: '批量拒绝',
+        riskThreshold: '风控阈值',
+        riskHighAmount: '高额风险',
+        overview: {
+          totalDistributors: '分销员总数',
+          totalBoundUsers: '已绑定下级用户',
+          pendingWithdrawalCount: '待审核提现单',
+          pendingWithdrawalAmount: '待审核提现金额'
+        },
+        funnel: {
+          title: '渠道漏斗（归因→首充）',
+          attributedUsers: '归因用户',
+          topupUsers: '首充用户'
+        }
+      },
       group: '分组',
       none: '无',
       groupChangedSuccess: '分组修改成功',

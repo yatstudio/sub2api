@@ -274,23 +274,27 @@ const clientTabs = computed((): TabConfig[] => {
       if (props.allowMessagesDispatch) {
         tabs.push({ id: 'claude', label: t('keys.useKeyModal.cliTabs.claudeCode'), icon: TerminalIcon })
       }
+      tabs.push({ id: 'openclaw', label: t('keys.useKeyModal.cliTabs.openclaw'), icon: TerminalIcon })
       tabs.push({ id: 'opencode', label: t('keys.useKeyModal.cliTabs.opencode'), icon: TerminalIcon })
       return tabs
     }
     case 'gemini':
       return [
         { id: 'gemini', label: t('keys.useKeyModal.cliTabs.geminiCli'), icon: SparkleIcon },
+        { id: 'openclaw', label: t('keys.useKeyModal.cliTabs.openclaw'), icon: TerminalIcon },
         { id: 'opencode', label: t('keys.useKeyModal.cliTabs.opencode'), icon: TerminalIcon }
       ]
     case 'antigravity':
       return [
         { id: 'claude', label: t('keys.useKeyModal.cliTabs.claudeCode'), icon: TerminalIcon },
         { id: 'gemini', label: t('keys.useKeyModal.cliTabs.geminiCli'), icon: SparkleIcon },
+        { id: 'openclaw', label: t('keys.useKeyModal.cliTabs.openclaw'), icon: TerminalIcon },
         { id: 'opencode', label: t('keys.useKeyModal.cliTabs.opencode'), icon: TerminalIcon }
       ]
     default:
       return [
         { id: 'claude', label: t('keys.useKeyModal.cliTabs.claudeCode'), icon: TerminalIcon },
+        { id: 'openclaw', label: t('keys.useKeyModal.cliTabs.openclaw'), icon: TerminalIcon },
         { id: 'opencode', label: t('keys.useKeyModal.cliTabs.opencode'), icon: TerminalIcon }
       ]
   }
@@ -309,7 +313,7 @@ const openaiTabs: TabConfig[] = [
   { id: 'windows', label: 'Windows', icon: WindowsIcon }
 ]
 
-const showShellTabs = computed(() => activeClientTab.value !== 'opencode')
+const showShellTabs = computed(() => activeClientTab.value !== 'opencode' && activeClientTab.value !== 'openclaw')
 
 const currentTabs = computed(() => {
   if (!showShellTabs.value) return []
@@ -320,6 +324,9 @@ const currentTabs = computed(() => {
 })
 
 const platformDescription = computed(() => {
+  if (activeClientTab.value === 'openclaw') {
+    return t('keys.useKeyModal.openclaw.description')
+  }
   switch (props.platform) {
     case 'openai':
       if (activeClientTab.value === 'claude') {
@@ -336,6 +343,9 @@ const platformDescription = computed(() => {
 })
 
 const platformNote = computed(() => {
+  if (activeClientTab.value === 'openclaw') {
+    return t('keys.useKeyModal.openclaw.note')
+  }
   switch (props.platform) {
     case 'openai':
       if (activeClientTab.value === 'claude') {
@@ -412,6 +422,14 @@ const currentFiles = computed((): FileConfig[] => {
     }
   }
 
+  if (activeClientTab.value === 'openclaw') {
+    let openClawBaseUrl = baseUrl
+    if (props.platform === 'antigravity') {
+      openClawBaseUrl = `${baseRoot}/antigravity`
+    }
+    return [generateOpenClawConfig(openClawBaseUrl, apiKey)]
+  }
+
   switch (props.platform) {
     case 'openai':
       if (activeClientTab.value === 'claude') {
@@ -478,6 +496,47 @@ $env:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`
     { path, content },
     { path: vscodeSettingsPath, content: vscodeContent, hint: 'VSCode Claude Code' }
   ]
+}
+
+function generateOpenClawConfig(baseUrl: string, apiKey: string): FileConfig {
+  const providerName = 'sub2api'
+  const modelID = 'gpt-5.4'
+  const content = JSON.stringify(
+    {
+      models: {
+        mode: 'merge',
+        providers: {
+          [providerName]: {
+            api: 'openai',
+            baseUrl,
+            apiKey,
+            models: [
+              {
+                id: modelID,
+                name: modelID
+              }
+            ]
+          }
+        }
+      },
+      agents: {
+        defaults: {
+          model: {
+            primary: `${providerName}/${modelID}`,
+            fallbacks: []
+          }
+        }
+      }
+    },
+    null,
+    2
+  )
+
+  return {
+    path: '~/.openclaw/openclaw.json',
+    content,
+    hint: t('keys.useKeyModal.openclaw.hint')
+  }
 }
 
 function generateGeminiCliContent(baseUrl: string, apiKey: string): FileConfig {

@@ -81,11 +81,29 @@ type DistributionSourceStat struct {
 }
 
 type DistributionOverview struct {
-	TotalDistributors      int64                  `json:"total_distributors"`
-	TotalBoundUsers        int64                  `json:"total_bound_users"`
-	PendingWithdrawalCount int64                  `json:"pending_withdrawal_count"`
-	PendingWithdrawalAmount float64               `json:"pending_withdrawal_amount"`
-	SourceStats            []DistributionSourceStat `json:"source_stats,omitempty"`
+	TotalDistributors       int64                    `json:"total_distributors"`
+	TotalBoundUsers         int64                    `json:"total_bound_users"`
+	PendingWithdrawalCount  int64                    `json:"pending_withdrawal_count"`
+	PendingWithdrawalAmount float64                  `json:"pending_withdrawal_amount"`
+	PendingAvgAgeHours      float64                  `json:"pending_avg_age_hours"`
+	DailyReviewCount        int64                    `json:"daily_review_count"`
+	ApproveRate7d           float64                  `json:"approve_rate_7d"`
+	SourceStats             []DistributionSourceStat `json:"source_stats,omitempty"`
+}
+
+type DistributionRiskSettings struct {
+	WithdrawalRiskThreshold float64 `json:"withdrawal_risk_threshold"`
+}
+
+type DistributionFunnelItem struct {
+	Source          string  `json:"source"`
+	AttributedUsers int64   `json:"attributed_users"`
+	TopupUsers      int64   `json:"topup_users"`
+	TopupRate       float64 `json:"topup_rate"`
+}
+
+type DistributionFunnel struct {
+	Items []DistributionFunnelItem `json:"items"`
 }
 
 type DistributionSummary struct {
@@ -136,6 +154,7 @@ type UserDistributionRepository interface {
 	GetDistributionProfile(ctx context.Context, userID int64) (*DistributionProfile, error)
 	GetDistributionSummary(ctx context.Context, userID int64) (*DistributionSummary, error)
 	GetDistributionOverview(ctx context.Context) (*DistributionOverview, error)
+	GetDistributionFunnel(ctx context.Context) (*DistributionFunnel, error)
 	BindInviterByInviteCode(ctx context.Context, userID int64, inviteCode string) error
 	ListDistributionReferrals(ctx context.Context, userID int64, params pagination.PaginationParams) ([]DistributionReferral, *pagination.PaginationResult, error)
 	ListDistributionTeam(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionTeamMember, *pagination.PaginationResult, error)

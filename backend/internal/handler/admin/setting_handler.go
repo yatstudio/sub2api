@@ -129,6 +129,7 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		MaxClaudeCodeVersion:                 settings.MaxClaudeCodeVersion,
 		AllowUngroupedKeyScheduling:          settings.AllowUngroupedKeyScheduling,
 		BackendModeEnabled:                   settings.BackendModeEnabled,
+		DistributionWithdrawalRiskThreshold:  settings.DistributionWithdrawalRiskThreshold,
 		EnableFingerprintUnification:         settings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:            settings.EnableMetadataPassthrough,
 	})
@@ -212,6 +213,8 @@ type UpdateSettingsRequest struct {
 	// Backend Mode
 	BackendModeEnabled bool `json:"backend_mode_enabled"`
 
+	DistributionWithdrawalRiskThreshold *float64 `json:"distribution_withdrawal_risk_threshold"`
+
 	// Gateway forwarding behavior
 	EnableFingerprintUnification *bool `json:"enable_fingerprint_unification"`
 	EnableMetadataPassthrough    *bool `json:"enable_metadata_passthrough"`
@@ -238,6 +241,10 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	}
 	if req.DefaultBalance < 0 {
 		req.DefaultBalance = 0
+	}
+	if req.DistributionWithdrawalRiskThreshold != nil && *req.DistributionWithdrawalRiskThreshold < 0 {
+		v := float64(0)
+		req.DistributionWithdrawalRiskThreshold = &v
 	}
 	req.SMTPHost = strings.TrimSpace(req.SMTPHost)
 	req.SMTPUsername = strings.TrimSpace(req.SMTPUsername)
@@ -583,6 +590,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		MaxClaudeCodeVersion:             req.MaxClaudeCodeVersion,
 		AllowUngroupedKeyScheduling:      req.AllowUngroupedKeyScheduling,
 		BackendModeEnabled:               req.BackendModeEnabled,
+		DistributionWithdrawalRiskThreshold: func() float64 {
+			if req.DistributionWithdrawalRiskThreshold != nil {
+				return *req.DistributionWithdrawalRiskThreshold
+			}
+			return previousSettings.DistributionWithdrawalRiskThreshold
+		}(),
 		OpsMonitoringEnabled: func() bool {
 			if req.OpsMonitoringEnabled != nil {
 				return *req.OpsMonitoringEnabled
@@ -697,6 +710,7 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		MaxClaudeCodeVersion:                 updatedSettings.MaxClaudeCodeVersion,
 		AllowUngroupedKeyScheduling:          updatedSettings.AllowUngroupedKeyScheduling,
 		BackendModeEnabled:                   updatedSettings.BackendModeEnabled,
+		DistributionWithdrawalRiskThreshold:  updatedSettings.DistributionWithdrawalRiskThreshold,
 		EnableFingerprintUnification:         updatedSettings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:            updatedSettings.EnableMetadataPassthrough,
 	})
@@ -861,6 +875,9 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	}
 	if before.BackendModeEnabled != after.BackendModeEnabled {
 		changed = append(changed, "backend_mode_enabled")
+	}
+	if before.DistributionWithdrawalRiskThreshold != after.DistributionWithdrawalRiskThreshold {
+		changed = append(changed, "distribution_withdrawal_risk_threshold")
 	}
 	if before.PurchaseSubscriptionEnabled != after.PurchaseSubscriptionEnabled {
 		changed = append(changed, "purchase_subscription_enabled")

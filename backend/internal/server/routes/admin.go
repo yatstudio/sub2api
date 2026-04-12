@@ -210,6 +210,10 @@ func registerUserManagementRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	users := admin.Group("/users")
 	{
 		users.GET("", h.Admin.User.List)
+		users.GET("/distribution/overview", h.Admin.User.GetDistributionOverview)
+		users.GET("/distribution/funnel", h.Admin.User.GetDistributionFunnel)
+		users.GET("/distribution/risk-settings", h.Admin.User.GetDistributionRiskSettings)
+		users.PUT("/distribution/risk-settings", h.Admin.User.UpdateDistributionRiskSettings)
 		users.GET("/:id", h.Admin.User.GetByID)
 		users.POST("", h.Admin.User.Create)
 		users.PUT("/:id", h.Admin.User.Update)
@@ -219,6 +223,13 @@ func registerUserManagementRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		users.GET("/:id/usage", h.Admin.User.GetUserUsage)
 		users.GET("/:id/balance-history", h.Admin.User.GetBalanceHistory)
 		users.POST("/:id/replace-group", h.Admin.User.ReplaceGroup)
+		users.GET("/:id/distribution/profile", h.Admin.User.GetDistributionProfile)
+		users.GET("/:id/distribution/summary", h.Admin.User.GetDistributionSummary)
+		users.GET("/:id/distribution/team", h.Admin.User.ListDistributionTeam)
+		users.GET("/:id/distribution/commissions", h.Admin.User.ListDistributionCommissions)
+		users.GET("/:id/distribution/withdrawals", h.Admin.User.ListDistributionWithdrawals)
+		users.POST("/:id/distribution/withdrawals/:withdrawal_id/review", h.Admin.User.ReviewDistributionWithdrawal)
+		users.PUT("/:id/distribution/commission-rate", h.Admin.User.UpdateDistributionCommissionRate)
 
 		// User attribute values
 		users.GET("/:id/attributes", h.Admin.UserAttribute.GetUserAttributes)

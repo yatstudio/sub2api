@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
+	middleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -399,4 +401,249 @@ func (h *UserHandler) ReplaceGroup(c *gin.Context) {
 	response.Success(c, gin.H{
 		"migrated_keys": result.MigratedKeys,
 	})
+}
+
+type UpdateDistributionCommissionRateRequest struct {
+	CommissionRate float64 `json:"commission_rate" binding:"required,gte=0,lte=1"`
+}
+
+type UpdateDistributionRiskSettingsRequest struct {
+	WithdrawalRiskThreshold float64 `json:"withdrawal_risk_threshold" binding:"required,gte=0"`
+}
+
+// GetDistributionRiskSettings handles getting distribution risk settings
+// GET /api/v1/admin/users/distribution/risk-settings
+func (h *UserHandler) GetDistributionRiskSettings(c *gin.Context) {
+	settings, err := h.adminService.GetDistributionRiskSettings(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, settings)
+}
+
+// UpdateDistributionRiskSettings handles updating distribution risk settings
+// PUT /api/v1/admin/users/distribution/risk-settings
+func (h *UserHandler) UpdateDistributionRiskSettings(c *gin.Context) {
+	var req UpdateDistributionRiskSettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	settings, err := h.adminService.UpdateDistributionRiskSettings(c.Request.Context(), req.WithdrawalRiskThreshold)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, settings)
+}
+
+// GetDistributionOverview handles getting system-wide distribution overview
+// GET /api/v1/admin/users/distribution/overview
+func (h *UserHandler) GetDistributionOverview(c *gin.Context) {
+	overview, err := h.adminService.GetDistributionOverview(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, overview)
+}
+
+// GetDistributionFunnel handles getting source funnel metrics
+// GET /api/v1/admin/users/distribution/funnel
+func (h *UserHandler) GetDistributionFunnel(c *gin.Context) {
+	funnel, err := h.adminService.GetDistributionFunnel(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, funnel)
+}
+
+// GetDistributionProfile handles getting a user's distribution profile
+// GET /api/v1/admin/users/:id/distribution/profile
+func (h *UserHandler) GetDistributionProfile(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	profile, err := h.adminService.GetUserDistributionProfile(c.Request.Context(), userID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, profile)
+}
+
+// GetDistributionSummary handles getting a user's distribution summary cards
+// GET /api/v1/admin/users/:id/distribution/summary
+func (h *UserHandler) GetDistributionSummary(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	summary, err := h.adminService.GetUserDistributionSummary(c.Request.Context(), userID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, summary)
+}
+
+// UpdateDistributionCommissionRate handles updating a user's distribution commission rate
+// PUT /api/v1/admin/users/:id/distribution/commission-rate
+func (h *UserHandler) UpdateDistributionCommissionRate(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	var req UpdateDistributionCommissionRateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.adminService.SetUserDistributionCommissionRate(c.Request.Context(), userID, req.CommissionRate); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "distribution commission rate updated"})
+}
+
+// ListDistributionTeam handles listing a user's level-1 or level-2 team
+// GET /api/v1/admin/users/:id/distribution/team?level=1|2
+func (h *UserHandler) ListDistributionTeam(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	rawLevel := strings.TrimSpace(c.Query("level"))
+	parsed, err := strconv.Atoi(rawLevel)
+	if err != nil || (parsed != 1 && parsed != 2) {
+		response.BadRequest(c, "Invalid level, expected 1 or 2")
+		return
+	}
+
+	page, pageSize := response.ParsePagination(c)
+	params := pagination.PaginationParams{Page: page, PageSize: pageSize}
+
+	items, result, err := h.adminService.ListUserDistributionTeam(c.Request.Context(), userID, params, parsed)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Paginated(c, items, result.Total, page, pageSize)
+}
+
+// ListDistributionCommissions handles listing a user's commission income records
+// GET /api/v1/admin/users/:id/distribution/commissions
+func (h *UserHandler) ListDistributionCommissions(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	page, pageSize := response.ParsePagination(c)
+	params := pagination.PaginationParams{Page: page, PageSize: pageSize}
+
+	level := 0
+	if rawLevel := strings.TrimSpace(c.Query("level")); rawLevel != "" {
+		parsed, err := strconv.Atoi(rawLevel)
+		if err != nil {
+			response.BadRequest(c, "Invalid level, expected 1 or 2")
+			return
+		}
+		if parsed != 1 && parsed != 2 {
+			response.BadRequest(c, "Invalid level, expected 1 or 2")
+			return
+		}
+		level = parsed
+	}
+
+	items, result, err := h.adminService.ListUserDistributionCommissions(c.Request.Context(), userID, params, level)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Paginated(c, items, result.Total, page, pageSize)
+}
+
+type ReviewDistributionWithdrawalRequest struct {
+	Status     string `json:"status"`
+	ReviewNote string `json:"review_note"`
+}
+
+// ListDistributionWithdrawals handles listing a user's withdrawal requests
+// GET /api/v1/admin/users/:id/distribution/withdrawals
+func (h *UserHandler) ListDistributionWithdrawals(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	page, pageSize := response.ParsePagination(c)
+	params := pagination.PaginationParams{Page: page, PageSize: pageSize}
+	status := strings.TrimSpace(c.Query("status"))
+
+	items, result, err := h.adminService.ListUserDistributionWithdrawals(c.Request.Context(), userID, params, status)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Paginated(c, items, result.Total, page, pageSize)
+}
+
+// ReviewDistributionWithdrawal handles approving/rejecting a withdrawal request
+// POST /api/v1/admin/users/:id/distribution/withdrawals/:withdrawal_id/review
+func (h *UserHandler) ReviewDistributionWithdrawal(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+	withdrawalID, err := strconv.ParseInt(c.Param("withdrawal_id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid withdrawal ID")
+		return
+	}
+
+	var req ReviewDistributionWithdrawalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	reviewerUserID := int64(0)
+	if subject, ok := middleware.GetAuthSubjectFromContext(c); ok {
+		reviewerUserID = subject.UserID
+	}
+
+	item, err := h.adminService.ReviewUserDistributionWithdrawal(c.Request.Context(), userID, withdrawalID, req.Status, req.ReviewNote, reviewerUserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, item)
 }

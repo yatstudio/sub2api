@@ -150,6 +150,45 @@ func (r *userRepository) GetDistributionSummary(ctx context.Context, userID int6
 	return &summary, nil
 }
 
+func (r *userRepository) GetDistributionFunnel(ctx context.Context) (*service.DistributionFunnel, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT
+			COALESCE(attr.source, 'direct') AS source,
+			COUNT(1) AS attributed_users,
+			COUNT(DISTINCT dc.invitee_user_id) AS topup_users
+		FROM distribution_invite_attributions attr
+		LEFT JOIN distribution_commissions dc
+			ON dc.invitee_user_id = attr.invitee_user_id
+			AND dc.commission_level = 1
+		GROUP BY COALESCE(attr.source, 'direct')
+		ORDER BY COUNT(DISTINCT dc.invitee_user_id) DESC, COUNT(1) DESC, source ASC
+	`)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "distribution_invite_attributions") {
+			return &service.DistributionFunnel{Items: []service.DistributionFunnelItem{}}, nil
+		}
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	items := make([]service.DistributionFunnelItem, 0, 8)
+	for rows.Next() {
+		var item service.DistributionFunnelItem
+		if err := rows.Scan(&item.Source, &item.AttributedUsers, &item.TopupUsers); err != nil {
+			return nil, err
+		}
+		if item.AttributedUsers > 0 {
+			item.TopupRate = round8(float64(item.TopupUsers) / float64(item.AttributedUsers))
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &service.DistributionFunnel{Items: items}, nil
+}
+
 func (r *userRepository) GetDistributionOverview(ctx context.Context) (*service.DistributionOverview, error) {
 	overview := &service.DistributionOverview{}
 
@@ -169,10 +208,34 @@ func (r *userRepository) GetDistributionOverview(ctx context.Context) (*service.
 	}
 
 	if err := scanSingleRow(ctx, r.sql, `
-		SELECT COUNT(1), COALESCE(SUM(amount), 0)::DECIMAL(20,8)
-		FROM distribution_withdrawals
+		SELECT
+			COUNT(1),
+			COALESCE(SUM(amount), 0)::DECIMAL(20,8),
+			COALESCE(AVG(EXTRACT(EPOCH FROM (NOW() - created_at)) / 3600.0), 0)::DECIMAL(20,4)
+		FROM distribution_withdrawal_requests
 		WHERE status = $1
-	`, []any{distributionWithdrawalStatusPending}, &overview.PendingWithdrawalCount, &overview.PendingWithdrawalAmount); err != nil {
+	`, []any{distributionWithdrawalStatusPending}, &overview.PendingWithdrawalCount, &overview.PendingWithdrawalAmount, &overview.PendingAvgAgeHours); err != nil {
+		return nil, err
+	}
+
+	if err := scanSingleRow(ctx, r.sql, `
+		SELECT COUNT(1)
+		FROM distribution_withdrawal_requests
+		WHERE reviewed_at IS NOT NULL
+		  AND reviewed_at >= date_trunc('day', NOW())
+	`, nil, &overview.DailyReviewCount); err != nil {
+		return nil, err
+	}
+
+	if err := scanSingleRow(ctx, r.sql, `
+		SELECT COALESCE(
+			AVG(CASE WHEN status = $1 THEN 1.0 ELSE 0.0 END),
+			0
+		)::DECIMAL(10,6)
+		FROM distribution_withdrawal_requests
+		WHERE reviewed_at IS NOT NULL
+		  AND reviewed_at >= NOW() - INTERVAL '7 days'
+	`, []any{distributionWithdrawalStatusApproved}, &overview.ApproveRate7d); err != nil {
 		return nil, err
 	}
 

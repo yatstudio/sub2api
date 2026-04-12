@@ -207,6 +207,8 @@ const password = ref<string>('')
 const initialTurnstileToken = ref<string>('')
 const promoCode = ref<string>('')
 const invitationCode = ref<string>('')
+const distributionInviteCode = ref<string>('')
+const distributionInviteSource = ref<string>('direct')
 const hasRegisterData = ref<boolean>(false)
 
 // Public settings
@@ -238,6 +240,8 @@ onMounted(async () => {
       initialTurnstileToken.value = registerData.turnstile_token || ''
       promoCode.value = registerData.promo_code || ''
       invitationCode.value = registerData.invitation_code || ''
+      distributionInviteCode.value = registerData.distribution_invite_code || ''
+      distributionInviteSource.value = registerData.distribution_invite_source || 'direct'
       hasRegisterData.value = !!(email.value && password.value)
     } catch {
       hasRegisterData.value = false
@@ -402,7 +406,9 @@ async function handleVerify(): Promise<void> {
       verify_code: verifyCode.value.trim(),
       turnstile_token: initialTurnstileToken.value || undefined,
       promo_code: promoCode.value || undefined,
-      invitation_code: invitationCode.value || undefined
+      invitation_code: invitationCode.value || undefined,
+      distribution_invite_code: distributionInviteCode.value || undefined,
+      distribution_invite_source: distributionInviteSource.value || undefined
     })
 
     // Clear session data

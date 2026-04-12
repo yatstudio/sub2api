@@ -524,6 +524,12 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	// Backend Mode
 	updates[SettingKeyBackendModeEnabled] = strconv.FormatBool(settings.BackendModeEnabled)
 
+	// 分销提现高额风控阈值
+	if settings.DistributionWithdrawalRiskThreshold < 0 {
+		settings.DistributionWithdrawalRiskThreshold = 0
+	}
+	updates[SettingKeyDistributionWithdrawalRiskThreshold] = strconv.FormatFloat(settings.DistributionWithdrawalRiskThreshold, 'f', 8, 64)
+
 	// Gateway forwarding behavior
 	updates[SettingKeyEnableFingerprintUnification] = strconv.FormatBool(settings.EnableFingerprintUnification)
 	updates[SettingKeyEnableMetadataPassthrough] = strconv.FormatBool(settings.EnableMetadataPassthrough)
@@ -860,6 +866,9 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 
 		// 分组隔离（默认不允许未分组 Key 调度）
 		SettingKeyAllowUngroupedKeyScheduling: "false",
+
+		// 分销提现高额风控阈值（美元）
+		SettingKeyDistributionWithdrawalRiskThreshold: "1000",
 	}
 
 	return s.settingRepo.SetMultiple(ctx, defaults)
@@ -997,6 +1006,14 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 
 	// 分组隔离
 	result.AllowUngroupedKeyScheduling = settings[SettingKeyAllowUngroupedKeyScheduling] == "true"
+
+	// 分销提现高额风控阈值（默认 1000）
+	result.DistributionWithdrawalRiskThreshold = 1000
+	if raw := strings.TrimSpace(settings[SettingKeyDistributionWithdrawalRiskThreshold]); raw != "" {
+		if v, err := strconv.ParseFloat(raw, 64); err == nil && v >= 0 {
+			result.DistributionWithdrawalRiskThreshold = v
+		}
+	}
 
 	// Gateway forwarding behavior (defaults: fingerprint=true, metadata_passthrough=false)
 	if v, ok := settings[SettingKeyEnableFingerprintUnification]; ok && v != "" {

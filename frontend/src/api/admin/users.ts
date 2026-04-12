@@ -5,6 +5,14 @@
 
 import { apiClient } from '../client'
 import type { AdminUser, UpdateUserRequest, PaginatedResponse, ApiKey } from '@/types'
+import type {
+  DistributionProfile,
+  DistributionSummary,
+  DistributionTeamMember,
+  DistributionCommissionRecord,
+  DistributionWithdrawalRequest,
+  DistributionSourceStat
+} from '@/api/user'
 
 /**
  * List all users with pagination
@@ -244,6 +252,129 @@ export async function replaceGroup(
   return data
 }
 
+export interface DistributionOverview {
+  total_distributors: number
+  total_bound_users: number
+  pending_withdrawal_count: number
+  pending_withdrawal_amount: number
+  pending_avg_age_hours: number
+  daily_review_count: number
+  approve_rate_7d: number
+  source_stats?: DistributionSourceStat[]
+}
+
+export interface DistributionRiskSettings {
+  withdrawal_risk_threshold: number
+}
+
+export interface DistributionFunnelItem {
+  source: string
+  attributed_users: number
+  topup_users: number
+  topup_rate: number
+}
+
+export interface DistributionFunnel {
+  items: DistributionFunnelItem[]
+}
+
+export async function getDistributionOverview(): Promise<DistributionOverview> {
+  const { data } = await apiClient.get<DistributionOverview>('/admin/users/distribution/overview')
+  return data
+}
+
+export async function getDistributionFunnel(): Promise<DistributionFunnel> {
+  const { data } = await apiClient.get<DistributionFunnel>('/admin/users/distribution/funnel')
+  return data
+}
+
+export async function getDistributionRiskSettings(): Promise<DistributionRiskSettings> {
+  const { data } = await apiClient.get<DistributionRiskSettings>('/admin/users/distribution/risk-settings')
+  return data
+}
+
+export async function updateDistributionRiskSettings(withdrawalRiskThreshold: number): Promise<DistributionRiskSettings> {
+  const { data } = await apiClient.put<DistributionRiskSettings>('/admin/users/distribution/risk-settings', {
+    withdrawal_risk_threshold: withdrawalRiskThreshold
+  })
+  return data
+}
+
+export async function getUserDistributionProfile(userId: number): Promise<DistributionProfile> {
+  const { data } = await apiClient.get<DistributionProfile>(`/admin/users/${userId}/distribution/profile`)
+  return data
+}
+
+export async function getUserDistributionSummary(userId: number): Promise<DistributionSummary> {
+  const { data } = await apiClient.get<DistributionSummary>(`/admin/users/${userId}/distribution/summary`)
+  return data
+}
+
+export async function listUserDistributionTeam(
+  userId: number,
+  level: 1 | 2,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<PaginatedResponse<DistributionTeamMember>> {
+  const { data } = await apiClient.get<PaginatedResponse<DistributionTeamMember>>(
+    `/admin/users/${userId}/distribution/team`,
+    { params: { level, page, page_size: pageSize } }
+  )
+  return data
+}
+
+export async function listUserDistributionCommissions(
+  userId: number,
+  page: number = 1,
+  pageSize: number = 20,
+  level?: 1 | 2
+): Promise<PaginatedResponse<DistributionCommissionRecord>> {
+  const { data } = await apiClient.get<PaginatedResponse<DistributionCommissionRecord>>(
+    `/admin/users/${userId}/distribution/commissions`,
+    { params: { level, page, page_size: pageSize } }
+  )
+  return data
+}
+
+export async function listUserDistributionWithdrawals(
+  userId: number,
+  page: number = 1,
+  pageSize: number = 20,
+  status?: 'pending' | 'approved' | 'rejected'
+): Promise<PaginatedResponse<DistributionWithdrawalRequest>> {
+  const { data } = await apiClient.get<PaginatedResponse<DistributionWithdrawalRequest>>(
+    `/admin/users/${userId}/distribution/withdrawals`,
+    { params: { status, page, page_size: pageSize } }
+  )
+  return data
+}
+
+export async function reviewUserDistributionWithdrawal(
+  userId: number,
+  withdrawalId: number,
+  payload: {
+    status: 'approved' | 'rejected'
+    review_note?: string
+  }
+): Promise<DistributionWithdrawalRequest> {
+  const { data } = await apiClient.post<DistributionWithdrawalRequest>(
+    `/admin/users/${userId}/distribution/withdrawals/${withdrawalId}/review`,
+    payload
+  )
+  return data
+}
+
+export async function updateUserDistributionCommissionRate(
+  userId: number,
+  commissionRate: number
+): Promise<{ message: string }> {
+  const { data } = await apiClient.put<{ message: string }>(
+    `/admin/users/${userId}/distribution/commission-rate`,
+    { commission_rate: commissionRate }
+  )
+  return data
+}
+
 export const usersAPI = {
   list,
   getById,
@@ -256,7 +387,18 @@ export const usersAPI = {
   getUserApiKeys,
   getUserUsageStats,
   getUserBalanceHistory,
-  replaceGroup
+  replaceGroup,
+  getDistributionOverview,
+  getDistributionFunnel,
+  getDistributionRiskSettings,
+  updateDistributionRiskSettings,
+  getUserDistributionProfile,
+  getUserDistributionSummary,
+  listUserDistributionTeam,
+  listUserDistributionCommissions,
+  listUserDistributionWithdrawals,
+  reviewUserDistributionWithdrawal,
+  updateUserDistributionCommissionRate
 }
 
 export default usersAPI

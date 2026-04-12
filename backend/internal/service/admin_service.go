@@ -27,6 +27,17 @@ type AdminService interface {
 	UpdateUser(ctx context.Context, id int64, input *UpdateUserInput) (*User, error)
 	DeleteUser(ctx context.Context, id int64) error
 	UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*User, error)
+	GetUserDistributionProfile(ctx context.Context, userID int64) (*DistributionProfile, error)
+	GetUserDistributionSummary(ctx context.Context, userID int64) (*DistributionSummary, error)
+	GetDistributionOverview(ctx context.Context) (*DistributionOverview, error)
+	GetDistributionFunnel(ctx context.Context) (*DistributionFunnel, error)
+	ListUserDistributionTeam(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionTeamMember, *pagination.PaginationResult, error)
+	ListUserDistributionCommissions(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionCommissionRecord, *pagination.PaginationResult, error)
+	ListUserDistributionWithdrawals(ctx context.Context, userID int64, params pagination.PaginationParams, status string) ([]DistributionWithdrawalRequest, *pagination.PaginationResult, error)
+	ReviewUserDistributionWithdrawal(ctx context.Context, userID, withdrawalID int64, status, reviewNote string, reviewerUserID int64) (*DistributionWithdrawalRequest, error)
+	SetUserDistributionCommissionRate(ctx context.Context, userID int64, rate float64) error
+	GetDistributionRiskSettings(ctx context.Context) (*DistributionRiskSettings, error)
+	UpdateDistributionRiskSettings(ctx context.Context, threshold float64) (*DistributionRiskSettings, error)
 	GetUserAPIKeys(ctx context.Context, userID int64, page, pageSize int) ([]APIKey, int64, error)
 	GetUserUsageStats(ctx context.Context, userID int64, period string) (any, error)
 	// GetUserBalanceHistory returns paginated balance/concurrency change records for a user.
@@ -718,6 +729,113 @@ func (s *adminServiceImpl) DeleteUser(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (s *adminServiceImpl) GetUserDistributionProfile(ctx context.Context, userID int64) (*DistributionProfile, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.GetDistributionProfile(ctx, userID)
+}
+
+func (s *adminServiceImpl) SetUserDistributionCommissionRate(ctx context.Context, userID int64, rate float64) error {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return ErrDistributionUnsupportedRepo
+	}
+	if err := distRepo.SetDistributionCommissionRate(ctx, userID, rate); err != nil {
+		return err
+	}
+	if s.authCacheInvalidator != nil {
+		s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, userID)
+	}
+	return nil
+}
+
+func (s *adminServiceImpl) GetUserDistributionSummary(ctx context.Context, userID int64) (*DistributionSummary, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.GetDistributionSummary(ctx, userID)
+}
+
+func (s *adminServiceImpl) GetDistributionOverview(ctx context.Context) (*DistributionOverview, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.GetDistributionOverview(ctx)
+}
+
+func (s *adminServiceImpl) GetDistributionFunnel(ctx context.Context) (*DistributionFunnel, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.GetDistributionFunnel(ctx)
+}
+
+func (s *adminServiceImpl) ListUserDistributionTeam(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionTeamMember, *pagination.PaginationResult, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.ListDistributionTeam(ctx, userID, params, level)
+}
+
+func (s *adminServiceImpl) ListUserDistributionCommissions(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]DistributionCommissionRecord, *pagination.PaginationResult, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.ListDistributionCommissions(ctx, userID, params, level)
+}
+
+func (s *adminServiceImpl) ListUserDistributionWithdrawals(ctx context.Context, userID int64, params pagination.PaginationParams, status string) ([]DistributionWithdrawalRequest, *pagination.PaginationResult, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.ListDistributionWithdrawalRequests(ctx, userID, params, status)
+}
+
+func (s *adminServiceImpl) ReviewUserDistributionWithdrawal(ctx context.Context, userID, withdrawalID int64, status, reviewNote string, reviewerUserID int64) (*DistributionWithdrawalRequest, error) {
+	distRepo, ok := s.userRepo.(UserDistributionRepository)
+	if !ok {
+		return nil, ErrDistributionUnsupportedRepo
+	}
+	return distRepo.ReviewDistributionWithdrawalRequest(ctx, userID, withdrawalID, status, reviewNote, reviewerUserID)
+}
+
+func (s *adminServiceImpl) GetDistributionRiskSettings(ctx context.Context) (*DistributionRiskSettings, error) {
+	if s.settingService == nil {
+		return &DistributionRiskSettings{WithdrawalRiskThreshold: 1000}, nil
+	}
+	settings, err := s.settingService.GetAllSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &DistributionRiskSettings{WithdrawalRiskThreshold: settings.DistributionWithdrawalRiskThreshold}, nil
+}
+
+func (s *adminServiceImpl) UpdateDistributionRiskSettings(ctx context.Context, threshold float64) (*DistributionRiskSettings, error) {
+	if s.settingService == nil {
+		return nil, fmt.Errorf("setting service unavailable")
+	}
+	if threshold < 0 {
+		threshold = 0
+	}
+	settings, err := s.settingService.GetAllSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	settings.DistributionWithdrawalRiskThreshold = threshold
+	if err := s.settingService.UpdateSettings(ctx, settings); err != nil {
+		return nil, err
+	}
+	return &DistributionRiskSettings{WithdrawalRiskThreshold: threshold}, nil
+}
+
 func (s *adminServiceImpl) UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*User, error) {
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
@@ -745,6 +863,37 @@ func (s *adminServiceImpl) UpdateUserBalance(ctx context.Context, userID int64, 
 	balanceDiff := user.Balance - oldBalance
 	if s.authCacheInvalidator != nil && balanceDiff != 0 {
 		s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, userID)
+	}
+
+	if operation == "add" && balanceDiff > 0 {
+		if distRepo, ok := s.userRepo.(UserDistributionRepository); ok {
+			commissionResult, commissionErr := distRepo.ApplyTopupDistributionCommission(ctx, userID, balanceDiff, notes)
+			if commissionErr != nil {
+				logger.LegacyPrintf("service.admin", "apply topup distribution commission failed: user_id=%d amount=%.8f err=%v", userID, balanceDiff, commissionErr)
+			} else if commissionResult != nil {
+				inviterIDs := make([]int64, 0, 2)
+				if commissionResult.InviterUserID > 0 {
+					inviterIDs = append(inviterIDs, commissionResult.InviterUserID)
+				}
+				if commissionResult.SecondLevelInviterUserID > 0 && commissionResult.SecondLevelInviterUserID != commissionResult.InviterUserID {
+					inviterIDs = append(inviterIDs, commissionResult.SecondLevelInviterUserID)
+				}
+				for _, inviterUserID := range inviterIDs {
+					if s.authCacheInvalidator != nil {
+						s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, inviterUserID)
+					}
+					if s.billingCacheService != nil {
+						go func(inviterID int64) {
+							cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+							defer cancel()
+							if cacheErr := s.billingCacheService.InvalidateUserBalance(cacheCtx, inviterID); cacheErr != nil {
+								logger.LegacyPrintf("service.admin", "invalidate inviter balance cache failed: user_id=%d err=%v", inviterID, cacheErr)
+							}
+						}(inviterUserID)
+					}
+				}
+			}
+		}
 	}
 
 	if s.billingCacheService != nil {

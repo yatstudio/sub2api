@@ -90,5 +90,18 @@ func RegisterUserRoutes(
 			subscriptions.GET("/progress", h.Subscription.GetProgress)
 			subscriptions.GET("/summary", h.Subscription.GetSummary)
 		}
+
+		// 用户分销
+		distribution := authenticated.Group("/distribution")
+		{
+			distribution.GET("/profile", h.User.GetDistributionProfile)
+			distribution.GET("/summary", h.User.GetDistributionSummary)
+			distribution.POST("/bind", h.User.BindDistributionInviter)
+			distribution.GET("/referrals", h.User.ListDistributionReferrals)
+			distribution.GET("/team", h.User.ListDistributionTeam)
+			distribution.GET("/commissions", h.User.ListDistributionCommissions)
+			distribution.POST("/withdrawals", h.User.CreateDistributionWithdrawal)
+			distribution.GET("/withdrawals", h.User.ListDistributionWithdrawals)
+		}
 	}
 }

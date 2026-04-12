@@ -18,6 +18,7 @@ ARG GOSUMDB=sum.golang.google.cn
 FROM ${NODE_IMAGE} AS frontend-builder
 
 WORKDIR /app/frontend
+ENV NODE_OPTIONS=--max-old-space-size=4096
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate

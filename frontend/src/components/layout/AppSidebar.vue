@@ -489,6 +489,7 @@ const userNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
+    { path: '/distribution', label: t('nav.distribution'), icon: UsersIcon, hideInSimpleMode: true },
     ...(appStore.cachedPublicSettings?.sora_client_enabled
       ? [{ path: '/sora', label: t('nav.sora'), icon: SoraIcon }]
       : []),
@@ -520,6 +521,7 @@ const personalNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
+    { path: '/distribution', label: t('nav.distribution'), icon: UsersIcon, hideInSimpleMode: true },
     ...(appStore.cachedPublicSettings?.sora_client_enabled
       ? [{ path: '/sora', label: t('nav.sora'), icon: SoraIcon }]
       : []),

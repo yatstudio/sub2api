@@ -236,6 +236,9 @@ const (
 	// SettingKeyBackendModeEnabled Backend 模式：禁用用户注册和自助服务，仅管理员可登录
 	SettingKeyBackendModeEnabled = "backend_mode_enabled"
 
+	// SettingKeyDistributionWithdrawalRiskThreshold 分销提现高额风控阈值（美元）
+	SettingKeyDistributionWithdrawalRiskThreshold = "distribution_withdrawal_risk_threshold"
+
 	// Gateway Forwarding Behavior
 	// SettingKeyEnableFingerprintUnification 是否统一 OAuth 账号的 X-Stainless-* 指纹头（默认 true）
 	SettingKeyEnableFingerprintUnification = "enable_fingerprint_unification"
