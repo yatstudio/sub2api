@@ -88,6 +88,19 @@
                 <input v-model.number="riskDailyLimitAmountInput" type="number" min="0" step="10" class="input w-24" />
                 <button class="btn" :disabled="savingRiskThreshold" @click="saveRiskThreshold">{{ savingRiskThreshold ? t('common.loading') : t('common.save') }}</button>
               </div>
+              <select v-model="reviewReasonTag" class="input w-40" :title="t('admin.users.distribution.reviewReasonTag')">
+                <option value="manual_check">{{ t('admin.users.distribution.reasonTags.manualCheck') }}</option>
+                <option value="risk_flag">{{ t('admin.users.distribution.reasonTags.riskFlag') }}</option>
+                <option value="duplicate_account">{{ t('admin.users.distribution.reasonTags.duplicateAccount') }}</option>
+                <option value="policy_violation">{{ t('admin.users.distribution.reasonTags.policyViolation') }}</option>
+                <option value="other">{{ t('admin.users.distribution.reasonTags.other') }}</option>
+              </select>
+              <input
+                v-model="reviewNoteInput"
+                type="text"
+                class="input w-56"
+                :placeholder="t('admin.users.distribution.reviewNotePlaceholder')"
+              />
               <button class="btn btn-primary" :disabled="selectedPendingIds.length === 0 || batchReviewing" @click="batchReview('approved')">
                 {{ t('admin.users.distribution.batchApprove') }} ({{ selectedPendingIds.length }})
               </button>
@@ -110,7 +123,9 @@
                   <div>
                     <div class="font-medium">
                       #{{ item.id }} · ${{ toMoney(item.amount) }} · {{ item.account_ref }}
-                      <span v-if="item.amount >= riskThreshold" class="ml-2 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">{{ t('admin.users.distribution.riskHighAmount') }}</span>
+                      <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" :class="riskBadgeClass(item.amount)">
+                        {{ riskLabel(item.amount) }}
+                      </span>
                     </div>
                     <div class="text-xs text-gray-500">{{ statusLabel(item.status) }} · {{ formatDateTime(item.created_at) }}</div>
                   </div>
@@ -135,6 +150,7 @@ import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import { useAppStore } from '@/stores/app'
 import { formatDateTime } from '@/utils/format'
+import { buildDistributionReviewNote, evaluateWithdrawalRiskLevel } from '@/utils/distributionRisk'
 import type { AdminUser } from '@/types'
 import type { DistributionProfile, DistributionSummary, DistributionTeamMember, DistributionWithdrawalRequest } from '@/api/user'
 import BaseDialog from '@/components/common/BaseDialog.vue'
@@ -166,6 +182,8 @@ const withdrawals = ref<{ items: DistributionWithdrawalRequest[] }>({ items: [] 
 const teamLevel = ref<1 | 2>(1)
 const withdrawalStatus = ref<'all' | 'pending' | 'approved' | 'rejected'>('pending')
 const commissionRateInput = ref(0.1)
+const reviewReasonTag = ref<'manual_check' | 'risk_flag' | 'duplicate_account' | 'policy_violation' | 'other'>('manual_check')
+const reviewNoteInput = ref('')
 
 const toMoney = (value?: number) => Number(value || 0).toFixed(2)
 
@@ -174,6 +192,28 @@ const statusLabel = (status: string) => {
   if (status === 'rejected') return t('distribution.statusRejected')
   return t('distribution.statusPending')
 }
+
+const riskLevel = (amount: number) => evaluateWithdrawalRiskLevel({
+  amount,
+  riskThreshold: riskThreshold.value,
+  dailyLimitAmount: riskDailyLimitAmountInput.value
+})
+
+const riskLabel = (amount: number) => {
+  const level = riskLevel(amount)
+  if (level === 'high') return t('admin.users.distribution.riskLevelHigh')
+  if (level === 'medium') return t('admin.users.distribution.riskLevelMedium')
+  return t('admin.users.distribution.riskLevelLow')
+}
+
+const riskBadgeClass = (amount: number) => {
+  const level = riskLevel(amount)
+  if (level === 'high') return 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'
+  if (level === 'medium') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200'
+  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+}
+
+const currentReviewNote = () => buildDistributionReviewNote(reviewReasonTag.value, reviewNoteInput.value)
 
 const loadTeam = async () => {
   if (!props.user) return
@@ -268,10 +308,9 @@ const review = async (withdrawalId: number, status: 'approved' | 'rejected') => 
   if (!props.user) return
   reviewingId.value = withdrawalId
   try {
-    const reviewNote = window.prompt(t('admin.users.distribution.reviewNotePrompt')) || ''
     await adminAPI.users.reviewUserDistributionWithdrawal(props.user.id, withdrawalId, {
       status,
-      review_note: reviewNote
+      review_note: currentReviewNote()
     })
     appStore.showSuccess(t('common.saved'))
     await loadWithdrawals()
@@ -286,7 +325,7 @@ const batchReview = async (status: 'approved' | 'rejected') => {
   if (!props.user || selectedPendingIds.value.length === 0) return
   batchReviewing.value = true
   try {
-    const reviewNote = window.prompt(t('admin.users.distribution.reviewNotePrompt')) || ''
+    const reviewNote = currentReviewNote()
     for (const withdrawalId of selectedPendingIds.value) {
       await adminAPI.users.reviewUserDistributionWithdrawal(props.user.id, withdrawalId, {
         status,
