@@ -180,28 +180,33 @@ def main() -> int:
         "src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts",
         "src/i18n/__tests__/distributionWithdrawalLocales.spec.ts",
     ]
+    frontend_runner: list[str] | None = None
+    frontend_runner_limitation: str | None = None
+    frontend_results: list[dict[str, object]] = []
+
     try:
         frontend_runner, frontend_runner_limitation = resolve_frontend_test_runner()
     except RuntimeError as exc:
-        report["limitations"].append(str(exc))
+        report["limitations"].append(
+            f"{exc}; switched to structured static verification for frontend checks"
+        )
         report["frontend_test"] = []
-        print(json.dumps(report, ensure_ascii=False, indent=2))
-        return 1
+    else:
+        report["frontend_runner"] = " ".join(frontend_runner)
+        if frontend_runner_limitation:
+            report["limitations"].append(frontend_runner_limitation)
 
-    report["frontend_runner"] = " ".join(frontend_runner)
-    if frontend_runner_limitation:
-        report["limitations"].append(frontend_runner_limitation)
+        for spec in frontend_specs:
+            code, out = run([*frontend_runner, spec])
+            frontend_results.append({"spec": spec, "exit_code": code, "output": out})
+            if code != 0:
+                report["frontend_test"] = frontend_results
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+                return 1
 
-    frontend_results: list[dict[str, object]] = []
-    for spec in frontend_specs:
-        code, out = run([*frontend_runner, spec])
-        frontend_results.append({"spec": spec, "exit_code": code, "output": out})
-        if code != 0:
-            report["frontend_test"] = frontend_results
-            print(json.dumps(report, ensure_ascii=False, indent=2))
-            return 1
+        report["frontend_test"] = frontend_results
 
-    report["frontend_test"] = frontend_results
+    static_checks: list[str] = []
 
     if go_available:
         report["mode"] = "go-tests"
@@ -220,13 +225,20 @@ def main() -> int:
             cwd=ROOT / "backend",
         )
         report["backend_test"] = {"exit_code": code, "output": out}
+        if code != 0:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return code
+
+        if frontend_runner is None:
+            static_checks = static_verify()
+            report["static_checks"] = static_checks
         print(json.dumps(report, ensure_ascii=False, indent=2))
-        return code
+        return 0
 
     report["mode"] = "static-fallback-no-go"
     report["limitations"].append("go toolchain unavailable; backend go test skipped and replaced by structured static verification")
-    checks = static_verify()
-    report["static_checks"] = checks
+    static_checks = static_verify()
+    report["static_checks"] = static_checks
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
 
