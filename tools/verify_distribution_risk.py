@@ -56,6 +56,7 @@ def static_verify() -> list[str]:
     # P1: frontend reason mapping and i18n message keys
     require_contains(withdrawal_util, "DISTRIBUTION_WITHDRAWAL_COOLDOWN", "P1 cooldown mapping")
     require_contains(withdrawal_util, "DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT", "P1 daily count mapping")
+    require_contains(withdrawal_util, "DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT", "P1 daily count alias mapping")
     require_contains(withdrawal_util, "DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT", "P1 daily amount mapping")
     require_contains(zh_locale, "withdrawalErrors", "P1 zh locale section")
     require_contains(zh_locale, "dailyLimitCount", "P1 zh daily count text")

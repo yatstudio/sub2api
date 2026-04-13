@@ -61,6 +61,9 @@ describe('distributionWithdrawalError', () => {
     expect(resolveDistributionWithdrawalErrorMessage({ reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT' }, t))
       .toBe('t:distribution.withdrawalErrors.dailyLimitCount')
 
+    expect(resolveDistributionWithdrawalErrorMessage({ reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT' }, t))
+      .toBe('t:distribution.withdrawalErrors.dailyLimitCount')
+
     expect(resolveDistributionWithdrawalErrorMessage({ reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT' }, t))
       .toBe('t:distribution.withdrawalErrors.dailyLimitAmount')
   })

@@ -45,7 +45,9 @@ export const resolveDistributionWithdrawalErrorMessage = (
   const reason = extractDistributionWithdrawalReason(error)
 
   if (reason === 'DISTRIBUTION_WITHDRAWAL_COOLDOWN') return t('distribution.withdrawalErrors.cooldown')
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT') return t('distribution.withdrawalErrors.dailyLimitCount')
+  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT' || reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT') {
+    return t('distribution.withdrawalErrors.dailyLimitCount')
+  }
   if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT') return t('distribution.withdrawalErrors.dailyLimitAmount')
 
   return extractDistributionWithdrawalMessage(error) || t(fallbackKey)

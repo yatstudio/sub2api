@@ -941,7 +941,7 @@ export default {
     statusRejected: 'Rejected',
     withdrawalErrors: {
       cooldown: 'You are still in the withdrawal cooldown period. Please try again later.',
-      dailyLimitCount: 'Daily withdrawal request limit reached.',
+      dailyLimitCount: 'Daily withdrawal request count limit reached.',
       dailyLimitAmount: 'Daily withdrawal amount limit reached.'
     }
   },
