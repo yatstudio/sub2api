@@ -10,6 +10,7 @@ Behavior:
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -24,18 +25,33 @@ def run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
     return proc.returncode, out.strip()
 
 
-def require_contains(path: Path, needle: str, title: str) -> None:
-    content = path.read_text(encoding="utf-8")
-    if needle not in content:
-        raise AssertionError(f"{title}: missing `{needle}` in {path.relative_to(ROOT)}")
-
-
 def require_all(path: Path, checks: list[tuple[str, str]]) -> None:
     content = path.read_text(encoding="utf-8")
     rel = path.relative_to(ROOT)
     for needle, title in checks:
         if needle not in content:
             raise AssertionError(f"{title}: missing `{needle}` in {rel}")
+
+
+def require_distribution_withdrawal_error_locale_keys(path: Path, locale_name: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    # Scoped check: enforce that cooldown/dailyLimitCount/dailyLimitAmount exist inside
+    # distribution.withdrawalErrors block, not just anywhere in the locale file.
+    pattern = re.compile(
+        r"distribution\s*:\s*\{[\s\S]*?withdrawalErrors\s*:\s*\{(?P<body>[\s\S]*?)\}\s*,",
+        re.MULTILINE,
+    )
+    match = pattern.search(content)
+    if not match:
+        raise AssertionError(f"P1 {locale_name} locale section: missing `distribution.withdrawalErrors` block in {path.relative_to(ROOT)}")
+
+    body = match.group("body")
+    required = ["cooldown", "dailyLimitCount", "dailyLimitAmount"]
+    missing = [key for key in required if re.search(rf"\b{re.escape(key)}\s*:", body) is None]
+    if missing:
+        raise AssertionError(
+            f"P1 {locale_name} locale section: missing keys {missing} in distribution.withdrawalErrors block of {path.relative_to(ROOT)}"
+        )
 
 
 def static_verify() -> list[str]:
@@ -107,13 +123,9 @@ def static_verify() -> list[str]:
             ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT", "P1 daily amount alias mapping"),
         ],
     )
-    require_contains(zh_locale, "withdrawalErrors", "P1 zh locale section")
-    require_contains(zh_locale, "dailyLimitCount", "P1 zh daily count text")
-    require_contains(zh_locale, "dailyLimitAmount", "P1 zh daily amount text")
-    require_contains(en_locale, "withdrawalErrors", "P1 en locale section")
-    require_contains(en_locale, "dailyLimitCount", "P1 en daily count text")
-    require_contains(en_locale, "dailyLimitAmount", "P1 en daily amount text")
-    checks.append("frontend mapping + zh/en readable messages exist for cooldown/count/amount limits")
+    require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
+    require_distribution_withdrawal_error_locale_keys(en_locale, "en")
+    checks.append("frontend mapping + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
 
     return checks
 
