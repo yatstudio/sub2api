@@ -1,4 +1,4 @@
-.PHONY: build build-backend build-frontend build-datamanagementd test test-backend test-frontend test-datamanagementd secret-scan
+.PHONY: build build-backend build-frontend build-datamanagementd test test-backend test-frontend test-datamanagementd secret-scan verify-distribution-risk
 
 # 一键编译前后端
 build: build-backend build-frontend
@@ -30,3 +30,7 @@ test-datamanagementd:
 
 secret-scan:
 	@python3 tools/secret_scan.py
+
+# 分销提现错误提示最小回归验证（前端）
+verify-distribution-risk:
+	@npm --prefix frontend run test:run -- src/utils/__tests__/distributionWithdrawalError.spec.ts
