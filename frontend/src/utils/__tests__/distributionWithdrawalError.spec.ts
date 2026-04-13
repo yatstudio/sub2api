@@ -21,6 +21,18 @@ describe('distributionWithdrawalError', () => {
     expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
   })
 
+  it('extracts reason from response.data.code payload shape', () => {
+    const reason = extractDistributionWithdrawalReason({
+      response: {
+        data: {
+          code: 'distribution_withdrawal_daily_amount_limit'
+        }
+      }
+    })
+
+    expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+  })
+
   it('extracts reason when backend returns plain string error code', () => {
     expect(extractDistributionWithdrawalReason({ error: 'distribution_withdrawal_cooldown' }))
       .toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
