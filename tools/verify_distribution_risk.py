@@ -15,14 +15,24 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
-    proc = subprocess.run(cmd, cwd=cwd or ROOT, text=True, capture_output=True)
+def run(cmd: Sequence[str], cwd: Path | None = None) -> tuple[int, str]:
+    proc = subprocess.run(list(cmd), cwd=cwd or ROOT, text=True, capture_output=True)
     out = (proc.stdout or "") + (proc.stderr or "")
     return proc.returncode, out.strip()
+
+
+def resolve_frontend_test_runner() -> tuple[list[str], str | None]:
+    """Return command prefix for targeted frontend vitest runs and optional limitation message."""
+    if shutil.which("pnpm"):
+        return ["pnpm", "--dir", "frontend", "exec", "vitest", "run"], None
+    if shutil.which("npm"):
+        return ["npm", "--prefix", "frontend", "exec", "vitest", "run", "--"], "pnpm not found; used npm fallback for frontend tests"
+    raise RuntimeError("neither pnpm nor npm is available; cannot run frontend distribution risk tests")
 
 
 def require_all(path: Path, checks: list[tuple[str, str]]) -> None:
@@ -138,6 +148,7 @@ def main() -> int:
     report: dict[str, object] = {
         "frontend_test": None,
         "backend_test": None,
+        "frontend_runner": "",
         "go_available": go_available,
         "gofmt_available": gofmt_available,
         "mode": "",
@@ -150,9 +161,21 @@ def main() -> int:
         "src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts",
         "src/i18n/__tests__/distributionWithdrawalLocales.spec.ts",
     ]
+    try:
+        frontend_runner, frontend_runner_limitation = resolve_frontend_test_runner()
+    except RuntimeError as exc:
+        report["limitations"].append(str(exc))
+        report["frontend_test"] = []
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 1
+
+    report["frontend_runner"] = " ".join(frontend_runner)
+    if frontend_runner_limitation:
+        report["limitations"].append(frontend_runner_limitation)
+
     frontend_results: list[dict[str, object]] = []
     for spec in frontend_specs:
-        code, out = run(["npm", "--prefix", "frontend", "run", "test:run", "--", spec])
+        code, out = run([*frontend_runner, spec])
         frontend_results.append({"spec": spec, "exit_code": code, "output": out})
         if code != 0:
             report["frontend_test"] = frontend_results
