@@ -14,6 +14,7 @@ import (
 
 type settingUpdateRepoStub struct {
 	updates map[string]string
+	all     map[string]string
 }
 
 func (s *settingUpdateRepoStub) Get(ctx context.Context, key string) (*Setting, error) {
@@ -41,7 +42,14 @@ func (s *settingUpdateRepoStub) SetMultiple(ctx context.Context, settings map[st
 }
 
 func (s *settingUpdateRepoStub) GetAll(ctx context.Context) (map[string]string, error) {
-	panic("unexpected GetAll call")
+	if s.all == nil {
+		return map[string]string{}, nil
+	}
+	out := make(map[string]string, len(s.all))
+	for k, v := range s.all {
+		out[k] = v
+	}
+	return out, nil
 }
 
 func (s *settingUpdateRepoStub) Delete(ctx context.Context, key string) error {
@@ -226,6 +234,23 @@ func TestSettingService_UpdateSettings_DistributionWithdrawalRiskControls_ClampN
 	require.Equal(t, "0", repo.updates[SettingKeyDistributionWithdrawalCooldownDays])
 	require.Equal(t, "0", repo.updates[SettingKeyDistributionWithdrawalDailyLimitCount])
 	require.Equal(t, "0.00000000", repo.updates[SettingKeyDistributionWithdrawalDailyLimitAmount])
+}
+
+func TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ClampNegative(t *testing.T) {
+	repo := &settingUpdateRepoStub{all: map[string]string{
+		SettingKeyDistributionWithdrawalRiskThreshold:   "-1",
+		SettingKeyDistributionWithdrawalCooldownDays:    "-2",
+		SettingKeyDistributionWithdrawalDailyLimitCount: "-3",
+		SettingKeyDistributionWithdrawalDailyLimitAmount: "-4",
+	}}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetAllSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, float64(0), settings.DistributionWithdrawalRiskThreshold)
+	require.Equal(t, 0, settings.DistributionWithdrawalCooldownDays)
+	require.Equal(t, 0, settings.DistributionWithdrawalDailyLimitCount)
+	require.Equal(t, float64(0), settings.DistributionWithdrawalDailyLimitAmount)
 }
 
 func TestParseDefaultSubscriptions_NormalizesValues(t *testing.T) {

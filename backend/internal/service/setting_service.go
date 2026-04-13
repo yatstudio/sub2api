@@ -1025,25 +1025,37 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	// 分销提现风控（默认：阈值1000、冷却0天、日限1笔/10000美元）
 	result.DistributionWithdrawalRiskThreshold = 1000
 	if raw := strings.TrimSpace(settings[SettingKeyDistributionWithdrawalRiskThreshold]); raw != "" {
-		if v, err := strconv.ParseFloat(raw, 64); err == nil && v >= 0 {
+		if v, err := strconv.ParseFloat(raw, 64); err == nil {
+			if v < 0 {
+				v = 0
+			}
 			result.DistributionWithdrawalRiskThreshold = v
 		}
 	}
 	result.DistributionWithdrawalCooldownDays = 0
 	if raw := strings.TrimSpace(settings[SettingKeyDistributionWithdrawalCooldownDays]); raw != "" {
-		if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
+		if v, err := strconv.Atoi(raw); err == nil {
+			if v < 0 {
+				v = 0
+			}
 			result.DistributionWithdrawalCooldownDays = v
 		}
 	}
 	result.DistributionWithdrawalDailyLimitCount = 1
 	if raw := strings.TrimSpace(settings[SettingKeyDistributionWithdrawalDailyLimitCount]); raw != "" {
-		if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
+		if v, err := strconv.Atoi(raw); err == nil {
+			if v < 0 {
+				v = 0
+			}
 			result.DistributionWithdrawalDailyLimitCount = v
 		}
 	}
 	result.DistributionWithdrawalDailyLimitAmount = 10000
 	if raw := strings.TrimSpace(settings[SettingKeyDistributionWithdrawalDailyLimitAmount]); raw != "" {
-		if v, err := strconv.ParseFloat(raw, 64); err == nil && v >= 0 {
+		if v, err := strconv.ParseFloat(raw, 64); err == nil {
+			if v < 0 {
+				v = 0
+			}
 			result.DistributionWithdrawalDailyLimitAmount = v
 		}
 	}
