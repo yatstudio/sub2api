@@ -39,10 +39,27 @@
           </div>
 
           <div v-if="distributionOverview?.source_stats?.length" class="flex flex-wrap gap-2">
-            <span v-for="item in distributionOverview.source_stats" :key="`${item.source}:${item.material || ''}:${item.version || ''}`" class="inline-flex items-center gap-1 rounded-full border border-indigo-200 px-2.5 py-1 text-xs dark:border-indigo-900/50">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition"
+              :class="filters.distribution_source ? 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-dark-600 dark:text-gray-300 dark:hover:bg-dark-700' : 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200'"
+              @click="clearSourceQuickFilter"
+            >
+              <span class="uppercase">{{ t('admin.users.allDistributionSources') }}</span>
+            </button>
+            <button
+              v-for="item in distributionOverview.source_stats"
+              :key="`${item.source}:${item.material || ''}:${item.version || ''}`"
+              type="button"
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition"
+              :class="filters.distribution_source === item.source
+                ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200'
+                : 'border-indigo-200 hover:bg-indigo-50 dark:border-indigo-900/50 dark:hover:bg-indigo-900/20'"
+              @click="applySourceQuickFilter(item.source)"
+            >
               <span class="uppercase text-gray-500">{{ formatSourceStatLabel(item) }}</span>
               <span class="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">{{ item.count }}</span>
-            </span>
+            </button>
           </div>
 
           <div v-if="distributionOverview?.tier_stats?.length" class="flex flex-wrap gap-2">
@@ -913,6 +930,13 @@ const clearTierQuickFilter = () => {
   loadUsers()
 }
 
+const clearSourceQuickFilter = () => {
+  filters.distribution_source = ''
+  saveFiltersToStorage()
+  pagination.page = 1
+  loadUsers()
+}
+
 const applyTierQuickFilter = (tier: string) => {
   const allowed = new Set(['newbie', 'active', 'high_potential', 'dormant'])
   if (!allowed.has(tier)) return
@@ -922,6 +946,22 @@ const applyTierQuickFilter = (tier: string) => {
   }
   filters.distributor_tier = tier
   visibleFilters.add('distributor_tier')
+  saveFiltersToStorage()
+  pagination.page = 1
+  loadUsers()
+}
+
+const applySourceQuickFilter = (source: string) => {
+  const normalized = String(source || '').trim().toLowerCase()
+  if (!normalized) {
+    clearSourceQuickFilter()
+    return
+  }
+  if (filters.distribution_source === normalized) {
+    clearSourceQuickFilter()
+    return
+  }
+  filters.distribution_source = normalized
   saveFiltersToStorage()
   pagination.page = 1
   loadUsers()
@@ -971,7 +1011,8 @@ const filters = reactive({
   role: '',
   status: '',
   group: '',  // group name for fuzzy match, '' = all
-  distributor_tier: ''
+  distributor_tier: '',
+  distribution_source: ''
 })
 const activeAttributeFilters = reactive<Record<number, string>>({})
 
@@ -1021,6 +1062,7 @@ const loadSavedFilters = () => {
       if (parsed.status) filters.status = parsed.status
       if (parsed.group) filters.group = parsed.group
       if (parsed.distributor_tier) filters.distributor_tier = parsed.distributor_tier
+      if (parsed.distribution_source) filters.distribution_source = parsed.distribution_source
       if (parsed.attributes) {
         Object.assign(activeAttributeFilters, parsed.attributes)
       }
@@ -1041,6 +1083,7 @@ const saveFiltersToStorage = () => {
       status: filters.status,
       group: filters.group,
       distributor_tier: filters.distributor_tier,
+      distribution_source: filters.distribution_source,
       attributes: activeAttributeFilters
     }
     localStorage.setItem(FILTER_VALUES_KEY, JSON.stringify(values))
@@ -1304,6 +1347,7 @@ const loadUsers = async () => {
         search: searchQuery.value || undefined,
         group_name: filters.group || undefined,
         distributor_tier: (filters.distributor_tier || undefined) as any,
+        distribution_source: filters.distribution_source || undefined,
         attributes: Object.keys(attrFilters).length > 0 ? attrFilters : undefined,
         include_subscriptions: hasVisibleSubscriptionsColumn.value
       },

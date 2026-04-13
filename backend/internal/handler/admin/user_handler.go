@@ -92,9 +92,10 @@ func (h *UserHandler) List(c *gin.Context) {
 		Status:          c.Query("status"),
 		Role:            c.Query("role"),
 		Search:          search,
-		GroupName:       strings.TrimSpace(c.Query("group_name")),
-		DistributorTier: strings.TrimSpace(c.Query("distributor_tier")),
-		Attributes:      parseAttributeFilters(c),
+		GroupName:          strings.TrimSpace(c.Query("group_name")),
+		DistributorTier:    strings.TrimSpace(c.Query("distributor_tier")),
+		DistributionSource: strings.TrimSpace(c.Query("distribution_source")),
+		Attributes:         parseAttributeFilters(c),
 	}
 	if raw, ok := c.GetQuery("include_subscriptions"); ok {
 		includeSubscriptions := parseBoolQueryWithDefault(raw, true)

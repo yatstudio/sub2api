@@ -34,6 +34,7 @@ export async function list(
     attributes?: Record<number, string>  // attributeId -> value
     include_subscriptions?: boolean
     distributor_tier?: 'newbie' | 'active' | 'high_potential' | 'dormant'
+    distribution_source?: string
   },
   options?: {
     signal?: AbortSignal
@@ -48,7 +49,8 @@ export async function list(
     search: filters?.search,
     group_name: filters?.group_name,
     include_subscriptions: filters?.include_subscriptions,
-    distributor_tier: filters?.distributor_tier
+    distributor_tier: filters?.distributor_tier,
+    distribution_source: filters?.distribution_source
   }
 
   // Add attribute filters as attr[id]=value

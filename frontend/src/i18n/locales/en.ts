@@ -1361,6 +1361,7 @@ export default {
       allRoles: 'All Roles',
       allStatus: 'All Status',
       allGroups: 'All Groups',
+      allDistributionSources: 'All Sources',
       allDistributorTiers: 'All Distributor Tiers',
       distributorTierFilter: 'Distributor Tier',
       searchGroups: 'Search groups...',

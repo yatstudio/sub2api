@@ -218,6 +218,17 @@ func (r *userRepository) ListWithFilters(ctx context.Context, params pagination.
 		q = q.Where(dbuser.IDIn(allowedUserIDs...))
 	}
 
+	if filters.DistributionSource != "" {
+		allowedUserIDs, sourceErr := r.filterUsersByDistributionSource(ctx, filters.DistributionSource)
+		if sourceErr != nil {
+			return nil, nil, sourceErr
+		}
+		if len(allowedUserIDs) == 0 {
+			return []service.User{}, paginationResultFromTotal(0, params), nil
+		}
+		q = q.Where(dbuser.IDIn(allowedUserIDs...))
+	}
+
 	// If attribute filters are specified, we need to filter by user IDs first
 	var allowedUserIDs []int64
 	if len(filters.Attributes) > 0 {
@@ -328,6 +339,45 @@ func (r *userRepository) filterUsersByDistributorTier(ctx context.Context, tier 
 	defer func() { _ = rows.Close() }()
 
 	result := make([]int64, 0, 32)
+	for rows.Next() {
+		var userID int64
+		if scanErr := rows.Scan(&userID); scanErr != nil {
+			return nil, scanErr
+		}
+		result = append(result, userID)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, rowsErr
+	}
+	return result, nil
+}
+
+func (r *userRepository) filterUsersByDistributionSource(ctx context.Context, source string) ([]int64, error) {
+	rawNormalized := strings.Trim(strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(source)), "-", "_"), " ", "_"), "_")
+	normalizedSource := normalizeDistributionSource(source)
+	if rawNormalized != "" && normalizedSource == "direct" && rawNormalized != "direct" {
+		return []int64{}, nil
+	}
+
+	if r.sql == nil {
+		return nil, fmt.Errorf("sql executor is not configured")
+	}
+
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT invitee_user_id
+		FROM distribution_invite_attributions
+		WHERE COALESCE(source, 'direct') = $1
+	`, normalizedSource)
+	if err != nil {
+		errText := strings.ToLower(err.Error())
+		if strings.Contains(errText, "distribution_invite_attributions") {
+			return []int64{}, nil
+		}
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make([]int64, 0, 64)
 	for rows.Next() {
 		var userID int64
 		if scanErr := rows.Scan(&userID); scanErr != nil {

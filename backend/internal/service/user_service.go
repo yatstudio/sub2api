@@ -21,9 +21,10 @@ type UserListFilters struct {
 	Status          string           // User status filter
 	Role            string           // User role filter
 	Search          string           // Search in email, username
-	GroupName       string           // Filter by allowed group name (fuzzy match)
-	DistributorTier string           // Filter by distribution tier: newbie|active|high_potential|dormant
-	Attributes      map[int64]string // Custom attribute filters: attributeID -> value
+	GroupName          string           // Filter by allowed group name (fuzzy match)
+	DistributorTier    string           // Filter by distribution tier: newbie|active|high_potential|dormant
+	DistributionSource string           // Filter by distribution attribution source
+	Attributes         map[int64]string // Custom attribute filters: attributeID -> value
 	// IncludeSubscriptions controls whether ListWithFilters should load active subscriptions.
 	// For large datasets this can be expensive; admin list pages should enable it on demand.
 	// nil means not specified (default: load subscriptions for backward compatibility).
