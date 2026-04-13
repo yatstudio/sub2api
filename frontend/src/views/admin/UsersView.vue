@@ -46,10 +46,16 @@
           </div>
 
           <div v-if="distributionOverview?.tier_stats?.length" class="flex flex-wrap gap-2">
-            <span v-for="item in distributionOverview.tier_stats" :key="item.tier" class="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-2.5 py-1 text-xs dark:border-emerald-900/50">
+            <button
+              v-for="item in distributionOverview.tier_stats"
+              :key="item.tier"
+              type="button"
+              class="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-2.5 py-1 text-xs transition hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20"
+              @click="applyTierQuickFilter(item.tier)"
+            >
               <span class="uppercase text-gray-500">{{ tierLabel(item.tier) }}</span>
               <span class="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">{{ item.count }}</span>
-            </span>
+            </button>
           </div>
 
           <div v-if="distributionFunnel?.items?.length" class="rounded-xl border border-indigo-200/60 p-3 dark:border-indigo-900/40">
@@ -887,6 +893,16 @@ const tierLabel = (tier: string) => {
   if (tier === 'high_potential') return t('admin.users.distribution.tiers.highPotential')
   if (tier === 'dormant') return t('admin.users.distribution.tiers.dormant')
   return tier
+}
+
+const applyTierQuickFilter = (tier: string) => {
+  const allowed = new Set(['newbie', 'active', 'high_potential', 'dormant'])
+  if (!allowed.has(tier)) return
+  filters.distributor_tier = tier
+  visibleFilters.add('distributor_tier')
+  saveFiltersToStorage()
+  pagination.page = 1
+  loadUsers()
 }
 
 // Groups data for the groups column
