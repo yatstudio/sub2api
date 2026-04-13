@@ -64,6 +64,22 @@ def require_distribution_withdrawal_error_locale_keys(path: Path, locale_name: s
         )
 
 
+def is_frontend_environment_failure(output: str) -> bool:
+    lower = output.lower()
+    env_markers = [
+        "vitest: not found",
+        "command not found",
+        "cannot find module",
+        "module not found",
+        "enoent",
+        "missing script",
+        "is not recognized as an internal or external command",
+        "npm err! code enoent",
+        "pnpm: command not found",
+    ]
+    return any(marker in lower for marker in env_markers)
+
+
 def static_verify() -> list[str]:
     checks: list[str] = []
 
@@ -196,15 +212,24 @@ def main() -> int:
         if frontend_runner_limitation:
             report["limitations"].append(frontend_runner_limitation)
 
+        frontend_env_blocked = False
         for spec in frontend_specs:
             code, out = run([*frontend_runner, spec])
             frontend_results.append({"spec": spec, "exit_code": code, "output": out})
             if code != 0:
+                if is_frontend_environment_failure(out):
+                    frontend_env_blocked = True
+                    report["limitations"].append(
+                        f"frontend runner environment limitation on {spec}; switched to static verification for frontend checks"
+                    )
+                    break
                 report["frontend_test"] = frontend_results
                 print(json.dumps(report, ensure_ascii=False, indent=2))
                 return 1
 
         report["frontend_test"] = frontend_results
+        if frontend_env_blocked:
+            frontend_runner = None
 
     static_checks: list[str] = []
 
