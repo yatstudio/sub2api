@@ -128,9 +128,12 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		MinClaudeCodeVersion:                 settings.MinClaudeCodeVersion,
 		MaxClaudeCodeVersion:                 settings.MaxClaudeCodeVersion,
 		AllowUngroupedKeyScheduling:          settings.AllowUngroupedKeyScheduling,
-		BackendModeEnabled:                   settings.BackendModeEnabled,
-		DistributionWithdrawalRiskThreshold:  settings.DistributionWithdrawalRiskThreshold,
-		EnableFingerprintUnification:         settings.EnableFingerprintUnification,
+		BackendModeEnabled:                     settings.BackendModeEnabled,
+		DistributionWithdrawalRiskThreshold:    settings.DistributionWithdrawalRiskThreshold,
+		DistributionWithdrawalCooldownDays:     settings.DistributionWithdrawalCooldownDays,
+		DistributionWithdrawalDailyLimitCount:  settings.DistributionWithdrawalDailyLimitCount,
+		DistributionWithdrawalDailyLimitAmount: settings.DistributionWithdrawalDailyLimitAmount,
+		EnableFingerprintUnification:           settings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:            settings.EnableMetadataPassthrough,
 	})
 }
@@ -213,7 +216,10 @@ type UpdateSettingsRequest struct {
 	// Backend Mode
 	BackendModeEnabled bool `json:"backend_mode_enabled"`
 
-	DistributionWithdrawalRiskThreshold *float64 `json:"distribution_withdrawal_risk_threshold"`
+	DistributionWithdrawalRiskThreshold   *float64 `json:"distribution_withdrawal_risk_threshold"`
+	DistributionWithdrawalCooldownDays    *int     `json:"distribution_withdrawal_cooldown_days"`
+	DistributionWithdrawalDailyLimitCount *int     `json:"distribution_withdrawal_daily_limit_count"`
+	DistributionWithdrawalDailyLimitAmount *float64 `json:"distribution_withdrawal_daily_limit_amount"`
 
 	// Gateway forwarding behavior
 	EnableFingerprintUnification *bool `json:"enable_fingerprint_unification"`
@@ -245,6 +251,18 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	if req.DistributionWithdrawalRiskThreshold != nil && *req.DistributionWithdrawalRiskThreshold < 0 {
 		v := float64(0)
 		req.DistributionWithdrawalRiskThreshold = &v
+	}
+	if req.DistributionWithdrawalCooldownDays != nil && *req.DistributionWithdrawalCooldownDays < 0 {
+		v := 0
+		req.DistributionWithdrawalCooldownDays = &v
+	}
+	if req.DistributionWithdrawalDailyLimitCount != nil && *req.DistributionWithdrawalDailyLimitCount < 0 {
+		v := 0
+		req.DistributionWithdrawalDailyLimitCount = &v
+	}
+	if req.DistributionWithdrawalDailyLimitAmount != nil && *req.DistributionWithdrawalDailyLimitAmount < 0 {
+		v := float64(0)
+		req.DistributionWithdrawalDailyLimitAmount = &v
 	}
 	req.SMTPHost = strings.TrimSpace(req.SMTPHost)
 	req.SMTPUsername = strings.TrimSpace(req.SMTPUsername)
@@ -596,6 +614,24 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 			}
 			return previousSettings.DistributionWithdrawalRiskThreshold
 		}(),
+		DistributionWithdrawalCooldownDays: func() int {
+			if req.DistributionWithdrawalCooldownDays != nil {
+				return *req.DistributionWithdrawalCooldownDays
+			}
+			return previousSettings.DistributionWithdrawalCooldownDays
+		}(),
+		DistributionWithdrawalDailyLimitCount: func() int {
+			if req.DistributionWithdrawalDailyLimitCount != nil {
+				return *req.DistributionWithdrawalDailyLimitCount
+			}
+			return previousSettings.DistributionWithdrawalDailyLimitCount
+		}(),
+		DistributionWithdrawalDailyLimitAmount: func() float64 {
+			if req.DistributionWithdrawalDailyLimitAmount != nil {
+				return *req.DistributionWithdrawalDailyLimitAmount
+			}
+			return previousSettings.DistributionWithdrawalDailyLimitAmount
+		}(),
 		OpsMonitoringEnabled: func() bool {
 			if req.OpsMonitoringEnabled != nil {
 				return *req.OpsMonitoringEnabled
@@ -709,9 +745,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		MinClaudeCodeVersion:                 updatedSettings.MinClaudeCodeVersion,
 		MaxClaudeCodeVersion:                 updatedSettings.MaxClaudeCodeVersion,
 		AllowUngroupedKeyScheduling:          updatedSettings.AllowUngroupedKeyScheduling,
-		BackendModeEnabled:                   updatedSettings.BackendModeEnabled,
-		DistributionWithdrawalRiskThreshold:  updatedSettings.DistributionWithdrawalRiskThreshold,
-		EnableFingerprintUnification:         updatedSettings.EnableFingerprintUnification,
+		BackendModeEnabled:                     updatedSettings.BackendModeEnabled,
+		DistributionWithdrawalRiskThreshold:    updatedSettings.DistributionWithdrawalRiskThreshold,
+		DistributionWithdrawalCooldownDays:     updatedSettings.DistributionWithdrawalCooldownDays,
+		DistributionWithdrawalDailyLimitCount:  updatedSettings.DistributionWithdrawalDailyLimitCount,
+		DistributionWithdrawalDailyLimitAmount: updatedSettings.DistributionWithdrawalDailyLimitAmount,
+		EnableFingerprintUnification:           updatedSettings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:            updatedSettings.EnableMetadataPassthrough,
 	})
 }
@@ -878,6 +917,15 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	}
 	if before.DistributionWithdrawalRiskThreshold != after.DistributionWithdrawalRiskThreshold {
 		changed = append(changed, "distribution_withdrawal_risk_threshold")
+	}
+	if before.DistributionWithdrawalCooldownDays != after.DistributionWithdrawalCooldownDays {
+		changed = append(changed, "distribution_withdrawal_cooldown_days")
+	}
+	if before.DistributionWithdrawalDailyLimitCount != after.DistributionWithdrawalDailyLimitCount {
+		changed = append(changed, "distribution_withdrawal_daily_limit_count")
+	}
+	if before.DistributionWithdrawalDailyLimitAmount != after.DistributionWithdrawalDailyLimitAmount {
+		changed = append(changed, "distribution_withdrawal_daily_limit_amount")
 	}
 	if before.PurchaseSubscriptionEnabled != after.PurchaseSubscriptionEnabled {
 		changed = append(changed, "purchase_subscription_enabled")

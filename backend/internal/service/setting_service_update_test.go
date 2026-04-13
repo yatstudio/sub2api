@@ -194,6 +194,40 @@ func TestSettingService_UpdateSettings_RegistrationEmailSuffixWhitelist_Invalid(
 	require.Equal(t, "INVALID_REGISTRATION_EMAIL_SUFFIX_WHITELIST", infraerrors.Reason(err))
 }
 
+func TestSettingService_UpdateSettings_DistributionWithdrawalRiskControls_Persisted(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	svc := NewSettingService(repo, &config.Config{})
+
+	err := svc.UpdateSettings(context.Background(), &SystemSettings{
+		DistributionWithdrawalRiskThreshold:   1234.567,
+		DistributionWithdrawalCooldownDays:    3,
+		DistributionWithdrawalDailyLimitCount: 2,
+		DistributionWithdrawalDailyLimitAmount: 2500.5,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "1234.56700000", repo.updates[SettingKeyDistributionWithdrawalRiskThreshold])
+	require.Equal(t, "3", repo.updates[SettingKeyDistributionWithdrawalCooldownDays])
+	require.Equal(t, "2", repo.updates[SettingKeyDistributionWithdrawalDailyLimitCount])
+	require.Equal(t, "2500.50000000", repo.updates[SettingKeyDistributionWithdrawalDailyLimitAmount])
+}
+
+func TestSettingService_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	svc := NewSettingService(repo, &config.Config{})
+
+	err := svc.UpdateSettings(context.Background(), &SystemSettings{
+		DistributionWithdrawalRiskThreshold:   -1,
+		DistributionWithdrawalCooldownDays:    -7,
+		DistributionWithdrawalDailyLimitCount: -9,
+		DistributionWithdrawalDailyLimitAmount: -100,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "0.00000000", repo.updates[SettingKeyDistributionWithdrawalRiskThreshold])
+	require.Equal(t, "0", repo.updates[SettingKeyDistributionWithdrawalCooldownDays])
+	require.Equal(t, "0", repo.updates[SettingKeyDistributionWithdrawalDailyLimitCount])
+	require.Equal(t, "0.00000000", repo.updates[SettingKeyDistributionWithdrawalDailyLimitAmount])
+}
+
 func TestParseDefaultSubscriptions_NormalizesValues(t *testing.T) {
 	got := parseDefaultSubscriptions(`[{"group_id":11,"validity_days":30},{"group_id":11,"validity_days":60},{"group_id":0,"validity_days":10},{"group_id":12,"validity_days":99999}]`)
 	require.Equal(t, []DefaultSubscriptionSetting{

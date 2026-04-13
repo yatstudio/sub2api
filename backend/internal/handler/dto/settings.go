@@ -95,7 +95,10 @@ type SystemSettings struct {
 	// Backend Mode
 	BackendModeEnabled bool `json:"backend_mode_enabled"`
 
-	DistributionWithdrawalRiskThreshold float64 `json:"distribution_withdrawal_risk_threshold"`
+	DistributionWithdrawalRiskThreshold  float64 `json:"distribution_withdrawal_risk_threshold"`
+	DistributionWithdrawalCooldownDays   int     `json:"distribution_withdrawal_cooldown_days"`
+	DistributionWithdrawalDailyLimitCount int    `json:"distribution_withdrawal_daily_limit_count"`
+	DistributionWithdrawalDailyLimitAmount float64 `json:"distribution_withdrawal_daily_limit_amount"`
 
 	// Gateway forwarding behavior
 	EnableFingerprintUnification bool `json:"enable_fingerprint_unification"`
