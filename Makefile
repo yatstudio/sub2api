@@ -31,6 +31,6 @@ test-datamanagementd:
 secret-scan:
 	@python3 tools/secret_scan.py
 
-# 分销提现错误提示最小回归验证（前端）
+# 分销提现风控最小回归验证（前端必跑；Go 缺失时自动静态校验后端关键链路）
 verify-distribution-risk:
-	@npm --prefix frontend run test:run -- src/utils/__tests__/distributionWithdrawalError.spec.ts
+	@python3 tools/verify_distribution_risk.py
