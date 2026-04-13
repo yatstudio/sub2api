@@ -259,6 +259,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { userAPI } from '@/api'
 import { useAppStore } from '@/stores/app'
 import { formatDateTime } from '@/utils/format'
+import { resolveDistributionWithdrawalErrorMessage } from '@/utils/distributionWithdrawalError'
 import type {
   DistributionCommissionRecord,
   DistributionProfile,
@@ -369,13 +370,7 @@ const statusClass = (status: string) => {
   return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
 }
 
-const withdrawalErrorMessage = (error: any) => {
-  const reason = String(error?.reason || error?.code || '').toUpperCase()
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_COOLDOWN') return t('distribution.withdrawalErrors.cooldown')
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT') return t('distribution.withdrawalErrors.dailyLimitCount')
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT') return t('distribution.withdrawalErrors.dailyLimitAmount')
-  return error?.message || t('distribution.loadFailed')
-}
+const withdrawalErrorMessage = (error: unknown) => resolveDistributionWithdrawalErrorMessage(error, t)
 
 const loadCore = async () => {
   const [p, s, r] = await Promise.all([
