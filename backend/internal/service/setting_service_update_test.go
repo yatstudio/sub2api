@@ -236,6 +236,23 @@ func TestSettingService_UpdateSettings_DistributionWithdrawalRiskControls_ClampN
 	require.Equal(t, "0.00000000", repo.updates[SettingKeyDistributionWithdrawalDailyLimitAmount])
 }
 
+func TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ReadPersisted(t *testing.T) {
+	repo := &settingUpdateRepoStub{all: map[string]string{
+		SettingKeyDistributionWithdrawalRiskThreshold:   "1234.50000000",
+		SettingKeyDistributionWithdrawalCooldownDays:    "3",
+		SettingKeyDistributionWithdrawalDailyLimitCount: "4",
+		SettingKeyDistributionWithdrawalDailyLimitAmount: "999.25000000",
+	}}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetAllSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 1234.5, settings.DistributionWithdrawalRiskThreshold)
+	require.Equal(t, 3, settings.DistributionWithdrawalCooldownDays)
+	require.Equal(t, 4, settings.DistributionWithdrawalDailyLimitCount)
+	require.Equal(t, 999.25, settings.DistributionWithdrawalDailyLimitAmount)
+}
+
 func TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ClampNegative(t *testing.T) {
 	repo := &settingUpdateRepoStub{all: map[string]string{
 		SettingKeyDistributionWithdrawalRiskThreshold:   "-1",

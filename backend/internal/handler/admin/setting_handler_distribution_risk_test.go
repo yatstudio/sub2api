@@ -143,6 +143,48 @@ func TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_ClampNega
 	require.Equal(t, float64(0), resp.Data.DailyLimitAmt)
 }
 
+func TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_Persisted(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	repo := &settingHandlerRepoStub{settings: map[string]string{}}
+	h := newSettingHandlerForTest(repo)
+
+	payload := map[string]any{
+		"distribution_withdrawal_risk_threshold":    888.125,
+		"distribution_withdrawal_cooldown_days":     7,
+		"distribution_withdrawal_daily_limit_count": 5,
+		"distribution_withdrawal_daily_limit_amount": 4500.75,
+	}
+	body, err := json.Marshal(payload)
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/v1/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	h.UpdateSettings(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, "888.12500000", repo.settings[service.SettingKeyDistributionWithdrawalRiskThreshold])
+	require.Equal(t, "7", repo.settings[service.SettingKeyDistributionWithdrawalCooldownDays])
+	require.Equal(t, "5", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitCount])
+	require.Equal(t, "4500.75000000", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitAmount])
+
+	var resp struct {
+		Data struct {
+			RiskThreshold   float64 `json:"distribution_withdrawal_risk_threshold"`
+			CooldownDays    int     `json:"distribution_withdrawal_cooldown_days"`
+			DailyLimitCount int     `json:"distribution_withdrawal_daily_limit_count"`
+			DailyLimitAmt   float64 `json:"distribution_withdrawal_daily_limit_amount"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+	require.Equal(t, 888.125, resp.Data.RiskThreshold)
+	require.Equal(t, 7, resp.Data.CooldownDays)
+	require.Equal(t, 5, resp.Data.DailyLimitCount)
+	require.Equal(t, 4500.75, resp.Data.DailyLimitAmt)
+}
+
 func TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	repo := &settingHandlerRepoStub{settings: map[string]string{
