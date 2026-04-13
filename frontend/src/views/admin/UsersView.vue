@@ -47,10 +47,21 @@
 
           <div v-if="distributionOverview?.tier_stats?.length" class="flex flex-wrap gap-2">
             <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition"
+              :class="filters.distributor_tier ? 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-dark-600 dark:text-gray-300 dark:hover:bg-dark-700' : 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200'"
+              @click="clearTierQuickFilter"
+            >
+              <span class="uppercase">{{ t('admin.users.allDistributorTiers') }}</span>
+            </button>
+            <button
               v-for="item in distributionOverview.tier_stats"
               :key="item.tier"
               type="button"
-              class="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-2.5 py-1 text-xs transition hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20"
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition"
+              :class="filters.distributor_tier === item.tier
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                : 'border-emerald-200 hover:bg-emerald-50 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20'"
               @click="applyTierQuickFilter(item.tier)"
             >
               <span class="uppercase text-gray-500">{{ tierLabel(item.tier) }}</span>
@@ -895,9 +906,20 @@ const tierLabel = (tier: string) => {
   return tier
 }
 
+const clearTierQuickFilter = () => {
+  filters.distributor_tier = ''
+  saveFiltersToStorage()
+  pagination.page = 1
+  loadUsers()
+}
+
 const applyTierQuickFilter = (tier: string) => {
   const allowed = new Set(['newbie', 'active', 'high_potential', 'dormant'])
   if (!allowed.has(tier)) return
+  if (filters.distributor_tier === tier) {
+    clearTierQuickFilter()
+    return
+  }
   filters.distributor_tier = tier
   visibleFilters.add('distributor_tier')
   saveFiltersToStorage()
