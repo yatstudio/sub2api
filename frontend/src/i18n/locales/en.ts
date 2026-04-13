@@ -1361,6 +1361,8 @@ export default {
       allRoles: 'All Roles',
       allStatus: 'All Status',
       allGroups: 'All Groups',
+      allDistributorTiers: 'All Distributor Tiers',
+      distributorTierFilter: 'Distributor Tier',
       searchGroups: 'Search groups...',
       fuzzySearch: 'Fuzzy search',
       admin: 'Admin',

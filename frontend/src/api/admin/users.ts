@@ -33,6 +33,7 @@ export async function list(
     group_name?: string         // fuzzy filter by allowed group name
     attributes?: Record<number, string>  // attributeId -> value
     include_subscriptions?: boolean
+    distributor_tier?: 'newbie' | 'active' | 'high_potential' | 'dormant'
   },
   options?: {
     signal?: AbortSignal
@@ -46,7 +47,8 @@ export async function list(
     role: filters?.role,
     search: filters?.search,
     group_name: filters?.group_name,
-    include_subscriptions: filters?.include_subscriptions
+    include_subscriptions: filters?.include_subscriptions,
+    distributor_tier: filters?.distributor_tier
   }
 
   // Add attribute filters as attr[id]=value

@@ -89,11 +89,12 @@ func (h *UserHandler) List(c *gin.Context) {
 	}
 
 	filters := service.UserListFilters{
-		Status:     c.Query("status"),
-		Role:       c.Query("role"),
-		Search:     search,
-		GroupName:  strings.TrimSpace(c.Query("group_name")),
-		Attributes: parseAttributeFilters(c),
+		Status:          c.Query("status"),
+		Role:            c.Query("role"),
+		Search:          search,
+		GroupName:       strings.TrimSpace(c.Query("group_name")),
+		DistributorTier: strings.TrimSpace(c.Query("distributor_tier")),
+		Attributes:      parseAttributeFilters(c),
 	}
 	if raw, ok := c.GetQuery("include_subscriptions"); ok {
 		includeSubscriptions := parseBoolQueryWithDefault(raw, true)

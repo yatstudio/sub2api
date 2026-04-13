@@ -207,6 +207,17 @@ func (r *userRepository) ListWithFilters(ctx context.Context, params pagination.
 		))
 	}
 
+	if filters.DistributorTier != "" {
+		allowedUserIDs, tierErr := r.filterUsersByDistributorTier(ctx, filters.DistributorTier)
+		if tierErr != nil {
+			return nil, nil, tierErr
+		}
+		if len(allowedUserIDs) == 0 {
+			return []service.User{}, paginationResultFromTotal(0, params), nil
+		}
+		q = q.Where(dbuser.IDIn(allowedUserIDs...))
+	}
+
 	// If attribute filters are specified, we need to filter by user IDs first
 	var allowedUserIDs []int64
 	if len(filters.Attributes) > 0 {
@@ -282,6 +293,52 @@ func (r *userRepository) ListWithFilters(ctx context.Context, params pagination.
 	}
 
 	return outUsers, paginationResultFromTotal(int64(total), params), nil
+}
+
+func (r *userRepository) filterUsersByDistributorTier(ctx context.Context, tier string) ([]int64, error) {
+	tier = strings.ToLower(strings.TrimSpace(tier))
+	switch tier {
+	case "newbie", "active", "high_potential", "dormant":
+	default:
+		return []int64{}, nil
+	}
+
+	if r.sql == nil {
+		return nil, fmt.Errorf("sql executor is not configured")
+	}
+
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT user_id
+		FROM (
+			SELECT
+				user_id,
+				CASE
+					WHEN total_referrals >= 20 OR total_commission_earned >= 5000 THEN 'high_potential'
+					WHEN total_referrals >= 1 OR total_commission_earned >= 100 THEN 'active'
+					WHEN created_at >= NOW() - INTERVAL '14 days' THEN 'newbie'
+					ELSE 'dormant'
+				END AS tier
+			FROM user_distributions
+		) ranked
+		WHERE ranked.tier = $1
+	`, tier)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make([]int64, 0, 32)
+	for rows.Next() {
+		var userID int64
+		if scanErr := rows.Scan(&userID); scanErr != nil {
+			return nil, scanErr
+		}
+		result = append(result, userID)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, rowsErr
+	}
+	return result, nil
 }
 
 // filterUsersByAttributes returns user IDs that match ALL the given attribute filters

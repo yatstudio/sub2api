@@ -128,6 +128,21 @@
               />
             </div>
 
+            <!-- Distributor Tier Filter -->
+            <div v-if="visibleFilters.has('distributor_tier')" class="w-full sm:w-36">
+              <Select
+                v-model="filters.distributor_tier"
+                :options="[
+                  { value: '', label: t('admin.users.allDistributorTiers') },
+                  { value: 'newbie', label: t('admin.users.distribution.tiers.newbie') },
+                  { value: 'active', label: t('admin.users.distribution.tiers.active') },
+                  { value: 'high_potential', label: t('admin.users.distribution.tiers.highPotential') },
+                  { value: 'dormant', label: t('admin.users.distribution.tiers.dormant') }
+                ]"
+                @change="applyFilter"
+              />
+            </div>
+
             <!-- Dynamic Attribute Filters -->
             <template v-for="(value, attrId) in activeAttributeFilters" :key="attrId">
               <div
@@ -917,12 +932,13 @@ const groupFilterOptions = computed(() => {
 const filters = reactive({
   role: '',
   status: '',
-  group: ''  // group name for fuzzy match, '' = all
+  group: '',  // group name for fuzzy match, '' = all
+  distributor_tier: ''
 })
 const activeAttributeFilters = reactive<Record<number, string>>({})
 
 // Visible filters tracking (which filters are shown in the UI)
-// Keys: 'role', 'status', 'attr_${id}'
+// Keys: 'role', 'status', 'group', 'distributor_tier', 'attr_${id}'
 const visibleFilters = reactive<Set<string>>(new Set())
 
 // Dropdown states
@@ -946,7 +962,8 @@ const filterableAttributes = computed(() =>
 const builtInFilters = computed(() => [
   { key: 'role', name: t('admin.users.columns.role'), type: 'select' as const },
   { key: 'status', name: t('admin.users.columns.status'), type: 'select' as const },
-  { key: 'group', name: t('admin.users.columns.groups'), type: 'select' as const }
+  { key: 'group', name: t('admin.users.columns.groups'), type: 'select' as const },
+  { key: 'distributor_tier', name: t('admin.users.distributorTierFilter'), type: 'select' as const }
 ])
 
 // Load saved filters from localStorage
@@ -965,6 +982,7 @@ const loadSavedFilters = () => {
       if (parsed.role) filters.role = parsed.role
       if (parsed.status) filters.status = parsed.status
       if (parsed.group) filters.group = parsed.group
+      if (parsed.distributor_tier) filters.distributor_tier = parsed.distributor_tier
       if (parsed.attributes) {
         Object.assign(activeAttributeFilters, parsed.attributes)
       }
@@ -984,6 +1002,7 @@ const saveFiltersToStorage = () => {
       role: filters.role,
       status: filters.status,
       group: filters.group,
+      distributor_tier: filters.distributor_tier,
       attributes: activeAttributeFilters
     }
     localStorage.setItem(FILTER_VALUES_KEY, JSON.stringify(values))
@@ -1246,6 +1265,7 @@ const loadUsers = async () => {
         status: filters.status as any,
         search: searchQuery.value || undefined,
         group_name: filters.group || undefined,
+        distributor_tier: (filters.distributor_tier || undefined) as any,
         attributes: Object.keys(attrFilters).length > 0 ? attrFilters : undefined,
         include_subscriptions: hasVisibleSubscriptionsColumn.value
       },
@@ -1312,13 +1332,14 @@ const getAttributeDefinitionName = (attrId: number): string => {
   return def?.name || String(attrId)
 }
 
-// Toggle a built-in filter (role/status)
+// Toggle a built-in filter (role/status/group/distributor_tier)
 const toggleBuiltInFilter = (key: string) => {
   if (visibleFilters.has(key)) {
     visibleFilters.delete(key)
     if (key === 'role') filters.role = ''
     if (key === 'status') filters.status = ''
     if (key === 'group') filters.group = ''
+    if (key === 'distributor_tier') filters.distributor_tier = ''
   } else {
     visibleFilters.add(key)
     if (key === 'group') loadAllGroups()

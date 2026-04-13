@@ -1386,6 +1386,8 @@ export default {
       allRoles: '全部角色',
       allStatus: '全部状态',
       allGroups: '全部分组',
+      allDistributorTiers: '全部分层',
+      distributorTierFilter: '分销员分层',
       searchGroups: '搜索分组...',
       fuzzySearch: '模糊搜索',
       statusFilter: '状态筛选',
