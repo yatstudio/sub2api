@@ -146,6 +146,7 @@ def main() -> int:
 
     frontend_specs = [
         "src/utils/__tests__/distributionWithdrawalError.spec.ts",
+        "src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts",
         "src/i18n/__tests__/distributionWithdrawalLocales.spec.ts",
     ]
     frontend_results: list[dict[str, object]] = []
