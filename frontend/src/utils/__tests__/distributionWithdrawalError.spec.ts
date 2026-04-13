@@ -66,6 +66,9 @@ describe('distributionWithdrawalError', () => {
 
     expect(resolveDistributionWithdrawalErrorMessage({ reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT' }, t))
       .toBe('t:distribution.withdrawalErrors.dailyLimitAmount')
+
+    expect(resolveDistributionWithdrawalErrorMessage({ reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT' }, t))
+      .toBe('t:distribution.withdrawalErrors.dailyLimitAmount')
   })
 
   it('falls back to backend message then fallback key', () => {
