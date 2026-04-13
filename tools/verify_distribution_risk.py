@@ -57,6 +57,8 @@ def static_verify() -> list[str]:
             ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler read clamp regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_Persisted", "P0 handler write persisted regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler write clamp regression"),
+            ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_IncludeAllFourFields", "P0 handler audit changed-keys include all four controls"),
+            ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_UnchangedNotIncluded", "P0 handler audit changed-keys ignore unchanged controls"),
         ],
     )
     require_all(

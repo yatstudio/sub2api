@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -269,4 +270,46 @@ func TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_Omitte
 	require.Equal(t, 2, resp.Data.CooldownDays)
 	require.Equal(t, 3, resp.Data.DailyLimitCount)
 	require.Equal(t, 123.45, resp.Data.DailyLimitAmt)
+}
+
+func TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_IncludeAllFourFields(t *testing.T) {
+	before := &dto.SystemSettingsResponse{
+		DistributionWithdrawalRiskThreshold:   10,
+		DistributionWithdrawalCooldownDays:    1,
+		DistributionWithdrawalDailyLimitCount: 2,
+		DistributionWithdrawalDailyLimitAmount: 300,
+	}
+	after := &dto.SystemSettingsResponse{
+		DistributionWithdrawalRiskThreshold:   11,
+		DistributionWithdrawalCooldownDays:    3,
+		DistributionWithdrawalDailyLimitCount: 4,
+		DistributionWithdrawalDailyLimitAmount: 500,
+	}
+
+	changed := getChangedSettingKeys(before, after)
+	require.Contains(t, changed, "distribution_withdrawal_risk_threshold")
+	require.Contains(t, changed, "distribution_withdrawal_cooldown_days")
+	require.Contains(t, changed, "distribution_withdrawal_daily_limit_count")
+	require.Contains(t, changed, "distribution_withdrawal_daily_limit_amount")
+}
+
+func TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_UnchangedNotIncluded(t *testing.T) {
+	before := &dto.SystemSettingsResponse{
+		DistributionWithdrawalRiskThreshold:   88.8,
+		DistributionWithdrawalCooldownDays:    2,
+		DistributionWithdrawalDailyLimitCount: 5,
+		DistributionWithdrawalDailyLimitAmount: 456.78,
+	}
+	after := &dto.SystemSettingsResponse{
+		DistributionWithdrawalRiskThreshold:   88.8,
+		DistributionWithdrawalCooldownDays:    2,
+		DistributionWithdrawalDailyLimitCount: 5,
+		DistributionWithdrawalDailyLimitAmount: 456.78,
+	}
+
+	changed := getChangedSettingKeys(before, after)
+	require.NotContains(t, changed, "distribution_withdrawal_risk_threshold")
+	require.NotContains(t, changed, "distribution_withdrawal_cooldown_days")
+	require.NotContains(t, changed, "distribution_withdrawal_daily_limit_count")
+	require.NotContains(t, changed, "distribution_withdrawal_daily_limit_amount")
 }
