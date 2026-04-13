@@ -1429,6 +1429,9 @@ export default {
         },
         batchApprove: 'Batch Approve',
         batchReject: 'Batch Reject',
+        includeHighRiskInBatch: 'Include high-risk items',
+        noBatchTargets: 'No eligible pending withdrawals for batch review',
+        batchSkippedHighRisk: 'Batch review done, skipped {count} high-risk item(s)',
         riskThreshold: 'Risk Threshold',
         cooldownDays: 'Cooldown Days',
         dailyLimitCount: 'Daily Withdrawal Count Limit',
@@ -1449,7 +1452,9 @@ export default {
         funnel: {
           title: 'Source Funnel (Attributed → Topup)',
           attributedUsers: 'Attributed Users',
-          topupUsers: 'Topup Users'
+          topupUsers: 'Topup Users',
+          withdrawalRequests: 'Withdrawal Requests',
+          approvedWithdrawals: 'Approved Withdrawals'
         }
       },
       group: 'Group',

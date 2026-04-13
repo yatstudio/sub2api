@@ -101,10 +101,12 @@ type DistributionRiskSettings struct {
 }
 
 type DistributionFunnelItem struct {
-	Source          string  `json:"source"`
-	AttributedUsers int64   `json:"attributed_users"`
-	TopupUsers      int64   `json:"topup_users"`
-	TopupRate       float64 `json:"topup_rate"`
+	Source             string  `json:"source"`
+	AttributedUsers    int64   `json:"attributed_users"`
+	TopupUsers         int64   `json:"topup_users"`
+	TopupRate          float64 `json:"topup_rate"`
+	WithdrawalRequests int64   `json:"withdrawal_requests"`
+	ApprovedWithdrawals int64  `json:"approved_withdrawals"`
 }
 
 type DistributionFunnel struct {

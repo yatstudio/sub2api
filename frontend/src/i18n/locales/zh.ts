@@ -1456,6 +1456,9 @@ export default {
         },
         batchApprove: '批量通过',
         batchReject: '批量拒绝',
+        includeHighRiskInBatch: '包含高风险单',
+        noBatchTargets: '当前没有可批处理的待审提现单',
+        batchSkippedHighRisk: '批处理完成，已跳过 {count} 条高风险单',
         riskThreshold: '风控阈值',
         cooldownDays: '冷却天数',
         dailyLimitCount: '日提现笔数上限',
@@ -1476,7 +1479,9 @@ export default {
         funnel: {
           title: '渠道漏斗（归因→首充）',
           attributedUsers: '归因用户',
-          topupUsers: '首充用户'
+          topupUsers: '首充用户',
+          withdrawalRequests: '提现申请数',
+          approvedWithdrawals: '提现通过数'
         }
       },
       group: '分组',

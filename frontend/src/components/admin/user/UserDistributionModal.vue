@@ -101,6 +101,10 @@
                 class="input w-56"
                 :placeholder="t('admin.users.distribution.reviewNotePlaceholder')"
               />
+              <label class="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300">
+                <input v-model="includeHighRiskInBatch" type="checkbox" class="mt-0.5" />
+                <span>{{ t('admin.users.distribution.includeHighRiskInBatch') }}</span>
+              </label>
               <button class="btn btn-primary" :disabled="selectedPendingIds.length === 0 || batchReviewing" @click="batchReview('approved')">
                 {{ t('admin.users.distribution.batchApprove') }} ({{ selectedPendingIds.length }})
               </button>
@@ -184,6 +188,7 @@ const withdrawalStatus = ref<'all' | 'pending' | 'approved' | 'rejected'>('pendi
 const commissionRateInput = ref(0.1)
 const reviewReasonTag = ref<'manual_check' | 'risk_flag' | 'duplicate_account' | 'policy_violation' | 'other'>('manual_check')
 const reviewNoteInput = ref('')
+const includeHighRiskInBatch = ref(false)
 
 const toMoney = (value?: number) => Number(value || 0).toFixed(2)
 
@@ -323,16 +328,35 @@ const review = async (withdrawalId: number, status: 'approved' | 'rejected') => 
 
 const batchReview = async (status: 'approved' | 'rejected') => {
   if (!props.user || selectedPendingIds.value.length === 0) return
+
+  const selectedPending = withdrawals.value.items.filter((item) =>
+    item.status === 'pending' && selectedPendingIds.value.includes(item.id)
+  )
+
+  const filtered = includeHighRiskInBatch.value
+    ? selectedPending
+    : selectedPending.filter((item) => riskLevel(item.amount) !== 'high')
+
+  const skippedCount = selectedPending.length - filtered.length
+  if (filtered.length === 0) {
+    appStore.showError(t('admin.users.distribution.noBatchTargets'))
+    return
+  }
+
   batchReviewing.value = true
   try {
     const reviewNote = currentReviewNote()
-    for (const withdrawalId of selectedPendingIds.value) {
-      await adminAPI.users.reviewUserDistributionWithdrawal(props.user.id, withdrawalId, {
+    for (const item of filtered) {
+      await adminAPI.users.reviewUserDistributionWithdrawal(props.user.id, item.id, {
         status,
         review_note: reviewNote
       })
     }
-    appStore.showSuccess(t('common.saved'))
+    if (skippedCount > 0) {
+      appStore.showSuccess(t('admin.users.distribution.batchSkippedHighRisk', { count: skippedCount }))
+    } else {
+      appStore.showSuccess(t('common.saved'))
+    }
     await loadWithdrawals()
   } catch (error: any) {
     appStore.showError(error?.message || t('errors.somethingWentWrong'))

@@ -166,13 +166,21 @@ func (r *userRepository) GetDistributionFunnel(ctx context.Context) (*service.Di
 		SELECT
 			COALESCE(attr.source, 'direct') AS source,
 			COUNT(1) AS attributed_users,
-			COUNT(DISTINCT dc.invitee_user_id) AS topup_users
+			COUNT(DISTINCT dc.invitee_user_id) AS topup_users,
+			COUNT(w.id) AS withdrawal_requests,
+			COUNT(w.id) FILTER (WHERE w.status = 'approved') AS approved_withdrawals
 		FROM distribution_invite_attributions attr
 		LEFT JOIN distribution_commissions dc
 			ON dc.invitee_user_id = attr.invitee_user_id
 			AND dc.commission_level = 1
+		LEFT JOIN distribution_withdrawal_requests w
+			ON w.user_id = attr.invitee_user_id
 		GROUP BY COALESCE(attr.source, 'direct')
-		ORDER BY COUNT(DISTINCT dc.invitee_user_id) DESC, COUNT(1) DESC, source ASC
+		ORDER BY
+			(COUNT(DISTINCT dc.invitee_user_id)::DECIMAL / NULLIF(COUNT(1), 0)) DESC,
+			COUNT(DISTINCT dc.invitee_user_id) DESC,
+			COUNT(1) DESC,
+			source ASC
 	`)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "distribution_invite_attributions") {
@@ -185,7 +193,7 @@ func (r *userRepository) GetDistributionFunnel(ctx context.Context) (*service.Di
 	items := make([]service.DistributionFunnelItem, 0, 8)
 	for rows.Next() {
 		var item service.DistributionFunnelItem
-		if err := rows.Scan(&item.Source, &item.AttributedUsers, &item.TopupUsers); err != nil {
+		if err := rows.Scan(&item.Source, &item.AttributedUsers, &item.TopupUsers, &item.WithdrawalRequests, &item.ApprovedWithdrawals); err != nil {
 			return nil, err
 		}
 		if item.AttributedUsers > 0 {

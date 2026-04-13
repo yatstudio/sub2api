@@ -275,6 +275,8 @@ export interface DistributionFunnelItem {
   attributed_users: number
   topup_users: number
   topup_rate: number
+  withdrawal_requests: number
+  approved_withdrawals: number
 }
 
 export interface DistributionFunnel {

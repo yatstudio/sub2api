@@ -55,7 +55,9 @@
                 </div>
                 <div class="mt-1 text-[11px] text-gray-500">
                   {{ t('admin.users.distribution.funnel.attributedUsers') }}: {{ item.attributed_users }} ·
-                  {{ t('admin.users.distribution.funnel.topupUsers') }}: {{ item.topup_users }}
+                  {{ t('admin.users.distribution.funnel.topupUsers') }}: {{ item.topup_users }} ·
+                  {{ t('admin.users.distribution.funnel.withdrawalRequests') }}: {{ item.withdrawal_requests }} ·
+                  {{ t('admin.users.distribution.funnel.approvedWithdrawals') }}: {{ item.approved_withdrawals }}
                 </div>
               </div>
             </div>
