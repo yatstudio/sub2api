@@ -65,6 +65,8 @@ export interface RegisterRequest {
   invitation_code?: string
   distribution_invite_code?: string
   distribution_invite_source?: string
+  distribution_invite_material?: string
+  distribution_invite_version?: string
 }
 
 export interface SendVerifyCodeRequest {

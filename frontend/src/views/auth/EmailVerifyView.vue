@@ -209,6 +209,8 @@ const promoCode = ref<string>('')
 const invitationCode = ref<string>('')
 const distributionInviteCode = ref<string>('')
 const distributionInviteSource = ref<string>('direct')
+const distributionInviteMaterial = ref<string>('')
+const distributionInviteVersion = ref<string>('')
 const hasRegisterData = ref<boolean>(false)
 
 // Public settings
@@ -242,6 +244,8 @@ onMounted(async () => {
       invitationCode.value = registerData.invitation_code || ''
       distributionInviteCode.value = registerData.distribution_invite_code || ''
       distributionInviteSource.value = registerData.distribution_invite_source || 'direct'
+      distributionInviteMaterial.value = registerData.distribution_invite_material || ''
+      distributionInviteVersion.value = registerData.distribution_invite_version || ''
       hasRegisterData.value = !!(email.value && password.value)
     } catch {
       hasRegisterData.value = false
@@ -408,7 +412,9 @@ async function handleVerify(): Promise<void> {
       promo_code: promoCode.value || undefined,
       invitation_code: invitationCode.value || undefined,
       distribution_invite_code: distributionInviteCode.value || undefined,
-      distribution_invite_source: distributionInviteSource.value || undefined
+      distribution_invite_source: distributionInviteSource.value || undefined,
+      distribution_invite_material: distributionInviteMaterial.value || undefined,
+      distribution_invite_version: distributionInviteVersion.value || undefined
     })
 
     // Clear session data

@@ -39,8 +39,8 @@
           </div>
 
           <div v-if="distributionOverview?.source_stats?.length" class="flex flex-wrap gap-2">
-            <span v-for="item in distributionOverview.source_stats" :key="item.source" class="inline-flex items-center gap-1 rounded-full border border-indigo-200 px-2.5 py-1 text-xs dark:border-indigo-900/50">
-              <span class="uppercase text-gray-500">{{ item.source }}</span>
+            <span v-for="item in distributionOverview.source_stats" :key="`${item.source}:${item.material || ''}:${item.version || ''}`" class="inline-flex items-center gap-1 rounded-full border border-indigo-200 px-2.5 py-1 text-xs dark:border-indigo-900/50">
+              <span class="uppercase text-gray-500">{{ formatSourceStatLabel(item) }}</span>
               <span class="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">{{ item.count }}</span>
             </span>
           </div>
@@ -852,6 +852,12 @@ const distributionFunnel = ref<DistributionFunnel | null>(null)
 
 const toMoney = (value?: number) => Number(value || 0).toFixed(2)
 const toPercent = (value?: number) => `${Math.round(Number(value || 0) * 100)}%`
+const formatSourceStatLabel = (item: { source: string; material?: string; version?: string }) => {
+  const segments = [item.source]
+  if (item.material) segments.push(item.material)
+  if (item.version) segments.push(`v${item.version}`)
+  return segments.join('/')
+}
 
 // Groups data for the groups column
 const allGroups = ref<AdminGroup[]>([])

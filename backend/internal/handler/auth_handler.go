@@ -47,8 +47,10 @@ type RegisterRequest struct {
 	TurnstileToken           string `json:"turnstile_token"`
 	PromoCode                string `json:"promo_code"`                  // 注册优惠码
 	InvitationCode           string `json:"invitation_code"`             // 邀请码
-	DistributionInviteCode   string `json:"distribution_invite_code"`    // 分销邀请码
-	DistributionInviteSource string `json:"distribution_invite_source"`  // 分销来源
+	DistributionInviteCode     string `json:"distribution_invite_code"`      // 分销邀请码
+	DistributionInviteSource   string `json:"distribution_invite_source"`    // 分销来源
+	DistributionInviteMaterial string `json:"distribution_invite_material"`  // 分销素材
+	DistributionInviteVersion  string `json:"distribution_invite_version"`   // 分销版本
 }
 
 var distributionSourcePattern = regexp.MustCompile(`^[a-z0-9_-]{1,32}$`)
@@ -60,6 +62,17 @@ func normalizeDistributionInviteSource(source string) string {
 	}
 	if !distributionSourcePattern.MatchString(normalized) {
 		return "direct"
+	}
+	return normalized
+}
+
+func normalizeDistributionInviteTag(raw string) string {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	if normalized == "" {
+		return ""
+	}
+	if !distributionSourcePattern.MatchString(normalized) {
+		return ""
 	}
 	return normalized
 }
@@ -143,12 +156,21 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	distributionInviteCode := strings.TrimSpace(req.DistributionInviteCode)
 	distributionInviteSource := normalizeDistributionInviteSource(req.DistributionInviteSource)
+	distributionInviteMaterial := normalizeDistributionInviteTag(req.DistributionInviteMaterial)
+	distributionInviteVersion := normalizeDistributionInviteTag(req.DistributionInviteVersion)
 	if distributionInviteCode != "" {
 		if err := h.userService.BindInviterByInviteCode(c.Request.Context(), user.ID, distributionInviteCode); err != nil {
 			slog.Warn("failed to bind distribution inviter during registration", "user_id", user.ID, "invite_code", distributionInviteCode, "error", err)
 		} else {
-			if attrErr := h.userService.UpsertDistributionInviteAttribution(c.Request.Context(), user.ID, distributionInviteCode, distributionInviteSource); attrErr != nil {
-				slog.Warn("failed to upsert distribution invite attribution", "user_id", user.ID, "invite_code", distributionInviteCode, "source", distributionInviteSource, "error", attrErr)
+			if attrErr := h.userService.UpsertDistributionInviteAttribution(
+				c.Request.Context(),
+				user.ID,
+				distributionInviteCode,
+				distributionInviteSource,
+				distributionInviteMaterial,
+				distributionInviteVersion,
+			); attrErr != nil {
+				slog.Warn("failed to upsert distribution invite attribution", "user_id", user.ID, "invite_code", distributionInviteCode, "source", distributionInviteSource, "material", distributionInviteMaterial, "version", distributionInviteVersion, "error", attrErr)
 			}
 		}
 	}

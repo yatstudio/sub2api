@@ -358,6 +358,8 @@ const formData = reactive({
 
 const distributionInviteCode = ref<string>('')
 const distributionInviteSource = ref<string>('direct')
+const distributionInviteMaterial = ref<string>('')
+const distributionInviteVersion = ref<string>('')
 
 const errors = reactive({
   email: '',
@@ -406,6 +408,22 @@ onMounted(async () => {
       .slice(0, 32)
     if (sourceParam) {
       distributionInviteSource.value = sourceParam
+    }
+
+    const materialParam = String(route.query.material || route.query.utm_campaign || '')
+      .trim()
+      .toLowerCase()
+      .slice(0, 32)
+    if (materialParam) {
+      distributionInviteMaterial.value = materialParam
+    }
+
+    const versionParam = String(route.query.version || route.query.utm_content || '')
+      .trim()
+      .toLowerCase()
+      .slice(0, 32)
+    if (versionParam) {
+      distributionInviteVersion.value = versionParam
     }
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -710,7 +728,9 @@ async function handleRegister(): Promise<void> {
           promo_code: formData.promo_code || undefined,
           invitation_code: formData.invitation_code || undefined,
           distribution_invite_code: distributionInviteCode.value || undefined,
-          distribution_invite_source: distributionInviteSource.value || undefined
+          distribution_invite_source: distributionInviteSource.value || undefined,
+          distribution_invite_material: distributionInviteMaterial.value || undefined,
+          distribution_invite_version: distributionInviteVersion.value || undefined
         })
       )
 
@@ -727,7 +747,9 @@ async function handleRegister(): Promise<void> {
       promo_code: formData.promo_code || undefined,
       invitation_code: formData.invitation_code || undefined,
       distribution_invite_code: distributionInviteCode.value || undefined,
-      distribution_invite_source: distributionInviteSource.value || undefined
+      distribution_invite_source: distributionInviteSource.value || undefined,
+      distribution_invite_material: distributionInviteMaterial.value || undefined,
+      distribution_invite_version: distributionInviteVersion.value || undefined
     })
 
     // Show success toast

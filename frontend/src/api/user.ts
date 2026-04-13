@@ -59,6 +59,8 @@ export interface DistributionProfile {
 
 export interface DistributionSourceStat {
   source: string
+  material?: string
+  version?: string
   count: number
 }
 

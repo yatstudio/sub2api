@@ -78,8 +78,10 @@ type DistributionTeamMember struct {
 }
 
 type DistributionSourceStat struct {
-	Source string `json:"source"`
-	Count  int64  `json:"count"`
+	Source   string `json:"source"`
+	Material string `json:"material,omitempty"`
+	Version  string `json:"version,omitempty"`
+	Count    int64  `json:"count"`
 }
 
 type DistributionOverview struct {
@@ -168,7 +170,7 @@ type UserDistributionRepository interface {
 	ListDistributionCommissions(ctx context.Context, inviterUserID int64, params pagination.PaginationParams, level int) ([]DistributionCommissionRecord, *pagination.PaginationResult, error)
 	ListDistributionSourceStats(ctx context.Context, inviterUserID int64) ([]DistributionSourceStat, error)
 	CreateDistributionWithdrawalRequest(ctx context.Context, userID int64, amount float64, accountType, accountRef, notes string) (*DistributionWithdrawalRequest, error)
-	UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source string) error
+	UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source, material, version string) error
 	ListDistributionWithdrawalRequests(ctx context.Context, userID int64, params pagination.PaginationParams, status string) ([]DistributionWithdrawalRequest, *pagination.PaginationResult, error)
 	ReviewDistributionWithdrawalRequest(ctx context.Context, userID, withdrawalID int64, status, reviewNote string, reviewerUserID int64) (*DistributionWithdrawalRequest, error)
 	SetDistributionCommissionRate(ctx context.Context, userID int64, rate float64) error
@@ -226,7 +228,7 @@ func (s *UserService) BindInviterByInviteCode(ctx context.Context, userID int64,
 	return nil
 }
 
-func (s *UserService) UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source string) error {
+func (s *UserService) UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source, material, version string) error {
 	if inviteCode == "" {
 		return nil
 	}
@@ -234,7 +236,7 @@ func (s *UserService) UpsertDistributionInviteAttribution(ctx context.Context, i
 	if err != nil {
 		return err
 	}
-	if err := repo.UpsertDistributionInviteAttribution(ctx, inviteeUserID, inviteCode, source); err != nil {
+	if err := repo.UpsertDistributionInviteAttribution(ctx, inviteeUserID, inviteCode, source, material, version); err != nil {
 		return fmt.Errorf("upsert distribution invite attribution: %w", err)
 	}
 	return nil

@@ -269,24 +269,54 @@ func (r *userRepository) GetDistributionOverview(ctx context.Context) (*service.
 
 func (r *userRepository) ListDistributionSourceStats(ctx context.Context, inviterUserID int64) ([]service.DistributionSourceStat, error) {
 	rows, err := r.sql.QueryContext(ctx, `
-		SELECT COALESCE(source, 'direct') AS source, COUNT(1)
+		SELECT
+			COALESCE(source, 'direct') AS source,
+			COALESCE(material, '') AS material,
+			COALESCE(version, '') AS version,
+			COUNT(1)
 		FROM distribution_invite_attributions
 		WHERE ($1 = 0 OR inviter_user_id = $1)
-		GROUP BY COALESCE(source, 'direct')
-		ORDER BY COUNT(1) DESC, source ASC
+		GROUP BY COALESCE(source, 'direct'), COALESCE(material, ''), COALESCE(version, '')
+		ORDER BY COUNT(1) DESC, source ASC, material ASC, version ASC
 	`, inviterUserID)
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "distribution_invite_attributions") {
+		errText := strings.ToLower(err.Error())
+		if strings.Contains(errText, "distribution_invite_attributions") {
 			return []service.DistributionSourceStat{}, nil
+		}
+		if strings.Contains(errText, "column") && (strings.Contains(errText, "material") || strings.Contains(errText, "version")) {
+			legacyRows, legacyErr := r.sql.QueryContext(ctx, `
+				SELECT COALESCE(source, 'direct') AS source, COUNT(1)
+				FROM distribution_invite_attributions
+				WHERE ($1 = 0 OR inviter_user_id = $1)
+				GROUP BY COALESCE(source, 'direct')
+				ORDER BY COUNT(1) DESC, source ASC
+			`, inviterUserID)
+			if legacyErr != nil {
+				return nil, legacyErr
+			}
+			defer func() { _ = legacyRows.Close() }()
+			legacyItems := make([]service.DistributionSourceStat, 0, 8)
+			for legacyRows.Next() {
+				var item service.DistributionSourceStat
+				if scanErr := legacyRows.Scan(&item.Source, &item.Count); scanErr != nil {
+					return nil, scanErr
+				}
+				legacyItems = append(legacyItems, item)
+			}
+			if rowsErr := legacyRows.Err(); rowsErr != nil {
+				return nil, rowsErr
+			}
+			return legacyItems, nil
 		}
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
 
-	items := make([]service.DistributionSourceStat, 0, 4)
+	items := make([]service.DistributionSourceStat, 0, 8)
 	for rows.Next() {
 		var item service.DistributionSourceStat
-		if err := rows.Scan(&item.Source, &item.Count); err != nil {
+		if err := rows.Scan(&item.Source, &item.Material, &item.Version, &item.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, item)
@@ -318,16 +348,41 @@ func normalizeDistributionSource(source string) string {
 	}
 }
 
-func (r *userRepository) UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source string) error {
+func normalizeDistributionTag(raw string) string {
+	s := strings.ToLower(strings.TrimSpace(raw))
+	s = strings.ReplaceAll(s, "-", "_")
+	s = strings.ReplaceAll(s, " ", "_")
+	s = strings.ReplaceAll(s, ".", "_")
+	s = strings.ReplaceAll(s, "/", "_")
+	s = strings.ReplaceAll(s, "\\", "_")
+	s = strings.Trim(s, "_")
+	if s == "" {
+		return ""
+	}
+	if len(s) > 32 {
+		s = s[:32]
+	}
+	for _, ch := range s {
+		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' {
+			continue
+		}
+		return ""
+	}
+	return s
+}
+
+func (r *userRepository) UpsertDistributionInviteAttribution(ctx context.Context, inviteeUserID int64, inviteCode, source, material, version string) error {
 	code := normalizeInviteCode(inviteCode)
 	if code == "" {
 		return nil
 	}
 	normalizedSource := normalizeDistributionSource(source)
+	normalizedMaterial := normalizeDistributionTag(material)
+	normalizedVersion := normalizeDistributionTag(version)
 
 	if _, err := r.sql.ExecContext(ctx, `
-		INSERT INTO distribution_invite_attributions (invitee_user_id, inviter_user_id, invite_code, source)
-		SELECT $1, d.user_id, d.invite_code, $3
+		INSERT INTO distribution_invite_attributions (invitee_user_id, inviter_user_id, invite_code, source, material, version)
+		SELECT $1, d.user_id, d.invite_code, $3, $4, $5
 		FROM user_distributions d
 		WHERE d.invite_code = $2
 		ON CONFLICT (invitee_user_id)
@@ -335,9 +390,29 @@ func (r *userRepository) UpsertDistributionInviteAttribution(ctx context.Context
 			inviter_user_id = EXCLUDED.inviter_user_id,
 			invite_code = EXCLUDED.invite_code,
 			source = EXCLUDED.source,
+			material = EXCLUDED.material,
+			version = EXCLUDED.version,
 			updated_at = NOW()
-	`, inviteeUserID, code, normalizedSource); err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "distribution_invite_attributions") {
+	`, inviteeUserID, code, normalizedSource, normalizedMaterial, normalizedVersion); err != nil {
+		errText := strings.ToLower(err.Error())
+		if strings.Contains(errText, "distribution_invite_attributions") {
+			return nil
+		}
+		if strings.Contains(errText, "column") && (strings.Contains(errText, "material") || strings.Contains(errText, "version")) {
+			if _, legacyErr := r.sql.ExecContext(ctx, `
+				INSERT INTO distribution_invite_attributions (invitee_user_id, inviter_user_id, invite_code, source)
+				SELECT $1, d.user_id, d.invite_code, $3
+				FROM user_distributions d
+				WHERE d.invite_code = $2
+				ON CONFLICT (invitee_user_id)
+				DO UPDATE SET
+					inviter_user_id = EXCLUDED.inviter_user_id,
+					invite_code = EXCLUDED.invite_code,
+					source = EXCLUDED.source,
+					updated_at = NOW()
+			`, inviteeUserID, code, normalizedSource); legacyErr != nil {
+				return legacyErr
+			}
 			return nil
 		}
 		return err

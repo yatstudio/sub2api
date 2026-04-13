@@ -36,10 +36,10 @@
           <div class="flex flex-wrap gap-2">
             <span
               v-for="item in summary?.source_stats || []"
-              :key="item.source"
+              :key="`${item.source}:${item.material || ''}:${item.version || ''}`"
               class="inline-flex items-center gap-2 rounded-full border border-indigo-200 px-3 py-1 text-xs dark:border-indigo-900/50"
             >
-              <span class="font-medium uppercase">{{ item.source }}</span>
+              <span class="font-medium uppercase">{{ formatSourceStatLabel(item) }}</span>
               <span class="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">{{ item.count }}</span>
             </span>
           </div>
@@ -264,6 +264,7 @@ import type {
   DistributionCommissionRecord,
   DistributionProfile,
   DistributionReferral,
+  DistributionSourceStat,
   DistributionSummary,
   DistributionTeamMember,
   DistributionWithdrawalRequest
@@ -298,6 +299,12 @@ const withdrawForm = ref({
 })
 
 const toMoney = (value?: number) => Number(value || 0).toFixed(2)
+const formatSourceStatLabel = (item: DistributionSourceStat) => {
+  const segments = [item.source]
+  if (item.material) segments.push(item.material)
+  if (item.version) segments.push(`v${item.version}`)
+  return segments.join('/')
+}
 
 const goalCards = computed(() => {
   const referralCurrent = Number(profile.value?.total_referrals || 0)
@@ -322,13 +329,19 @@ const goalCards = computed(() => {
   ]
 })
 
-const buildInviteLink = (source?: string) => {
+const buildInviteLink = (source?: string, material?: string, version?: string) => {
   const code = profile.value?.invite_code || ''
   if (!code) return ''
   const url = new URL('/register', window.location.origin)
   url.searchParams.set('invite_code', code)
   if (source) {
     url.searchParams.set('src', source)
+  }
+  if (material) {
+    url.searchParams.set('material', material)
+  }
+  if (version) {
+    url.searchParams.set('version', version)
   }
   return url.toString()
 }
@@ -347,7 +360,7 @@ const copyText = async (text: string, successKey: string) => {
 }
 
 const copyInviteMaterial = async (channel: 'wechat' | 'group') => {
-  const link = buildInviteLink(channel)
+  const link = buildInviteLink(channel, channel, 'v1')
   const pitch = channel === 'wechat'
     ? t('distribution.wechatPitchTemplate', { link })
     : t('distribution.groupPitchTemplate', { link })
@@ -355,7 +368,7 @@ const copyInviteMaterial = async (channel: 'wechat' | 'group') => {
 }
 
 const copyInviteLink = async () => {
-  await copyText(buildInviteLink('direct'), 'distribution.copySuccess')
+  await copyText(buildInviteLink('direct', 'link', 'v1'), 'distribution.copySuccess')
 }
 
 const statusLabel = (status: string) => {
