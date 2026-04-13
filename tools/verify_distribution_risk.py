@@ -2,7 +2,7 @@
 """Minimal regression verification for distribution withdrawal risk controls.
 
 Behavior:
-1) Always runs frontend targeted unit tests for withdrawal error mapping.
+1) Always runs frontend targeted unit tests for withdrawal error mapping + zh/en locale texts.
 2) If Go toolchain is available, runs focused backend unit tests.
 3) If Go is unavailable, performs structured static validation on key files.
 """
@@ -130,11 +130,20 @@ def main() -> int:
         "limitations": [],
     }
 
-    code, out = run(["npm", "--prefix", "frontend", "run", "test:run", "--", "src/utils/__tests__/distributionWithdrawalError.spec.ts"])
-    report["frontend_test"] = {"exit_code": code, "output": out}
-    if code != 0:
-        print(json.dumps(report, ensure_ascii=False, indent=2))
-        return 1
+    frontend_specs = [
+        "src/utils/__tests__/distributionWithdrawalError.spec.ts",
+        "src/i18n/__tests__/distributionWithdrawalLocales.spec.ts",
+    ]
+    frontend_results: list[dict[str, object]] = []
+    for spec in frontend_specs:
+        code, out = run(["npm", "--prefix", "frontend", "run", "test:run", "--", spec])
+        frontend_results.append({"spec": spec, "exit_code": code, "output": out})
+        if code != 0:
+            report["frontend_test"] = frontend_results
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 1
+
+    report["frontend_test"] = frontend_results
 
     if go_available:
         report["mode"] = "go-tests"
