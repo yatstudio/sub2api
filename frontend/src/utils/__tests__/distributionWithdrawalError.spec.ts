@@ -28,6 +28,21 @@ describe('distributionWithdrawalError', () => {
       .toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
 
+  it('prefers structured reason/code over generic error string', () => {
+    const reason = extractDistributionWithdrawalReason({
+      error: 'request failed',
+      response: {
+        data: {
+          error: {
+            code: 'distribution_withdrawal_daily_limit'
+          }
+        }
+      }
+    })
+
+    expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+  })
+
   it('maps cooldown reason to readable i18n message', () => {
     const message = resolveDistributionWithdrawalErrorMessage({
       response: {
