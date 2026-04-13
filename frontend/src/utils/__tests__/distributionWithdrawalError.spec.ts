@@ -50,6 +50,20 @@ describe('distributionWithdrawalError', () => {
     })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
 
+  it('extracts known reasons from nested response.data.error.message payload', () => {
+    expect(extractDistributionWithdrawalReason({
+      response: { data: { error: { message: 'blocked by distribution_withdrawal_cooldown' } } }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
+
+    expect(extractDistributionWithdrawalReason({
+      response: { data: { error: { message: 'hit distribution_withdrawal_daily_limit_count' } } }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      response: { data: { error: { message: 'risk cap: distribution_withdrawal_daily_amount_limit' } } }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+  })
+
   it('prefers structured reason/code over generic error string', () => {
     const reason = extractDistributionWithdrawalReason({
       error: 'request failed',
