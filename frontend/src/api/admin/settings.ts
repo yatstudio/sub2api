@@ -152,6 +152,9 @@ export interface UpdateSettingsRequest {
   max_claude_code_version?: string
   allow_ungrouped_key_scheduling?: boolean
   distribution_withdrawal_risk_threshold?: number
+  distribution_withdrawal_cooldown_days?: number
+  distribution_withdrawal_daily_limit_count?: number
+  distribution_withdrawal_daily_limit_amount?: number
   enable_fingerprint_unification?: boolean
   enable_metadata_passthrough?: boolean
 }

@@ -1418,6 +1418,15 @@ export default {
         title: 'Distribution Operations',
         commissionRate: 'Distribution Commission Rate',
         reviewNotePrompt: 'Enter review note (optional)',
+        reviewReasonTag: 'Review Reason Tag',
+        reviewNotePlaceholder: 'Review note (optional)',
+        reasonTags: {
+          manualCheck: 'Manual Check',
+          riskFlag: 'Risk Flag',
+          duplicateAccount: 'Duplicate Account',
+          policyViolation: 'Policy Violation',
+          other: 'Other'
+        },
         batchApprove: 'Batch Approve',
         batchReject: 'Batch Reject',
         riskThreshold: 'Risk Threshold',
@@ -1425,6 +1434,9 @@ export default {
         dailyLimitCount: 'Daily Withdrawal Count Limit',
         dailyLimitAmount: 'Daily Withdrawal Amount Limit',
         riskHighAmount: 'High-Risk Amount',
+        riskLevelLow: 'Low Risk',
+        riskLevelMedium: 'Medium Risk',
+        riskLevelHigh: 'High Risk',
         overview: {
           totalDistributors: 'Total Distributors',
           totalBoundUsers: 'Bound Downline Users',
@@ -4253,6 +4265,18 @@ export default {
           'Duplicate subscription group: {groupId}. Each group can only appear once.',
         subscriptionGroup: 'Subscription Group',
         subscriptionValidityDays: 'Validity (days)'
+      },
+      distributionWithdrawal: {
+        title: 'Distribution Withdrawal Risk Controls',
+        description: 'Global guardrails for distribution commission withdrawals',
+        riskThreshold: 'Risk Threshold',
+        riskThresholdHint: 'Single withdrawal amount above this value is considered high-risk.',
+        cooldownDays: 'Cooldown Days',
+        cooldownDaysHint: 'Minimum days since user registration before withdrawals are allowed.',
+        dailyLimitCount: 'Daily Request Limit',
+        dailyLimitCountHint: 'Maximum number of withdrawal requests per user per 24 hours.',
+        dailyLimitAmount: 'Daily Amount Limit',
+        dailyLimitAmountHint: 'Maximum total withdrawal amount per user per 24 hours.'
       },
       claudeCode: {
         title: 'Claude Code Settings',

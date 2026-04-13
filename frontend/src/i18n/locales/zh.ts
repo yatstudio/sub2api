@@ -1445,6 +1445,15 @@ export default {
         title: '分销运营台',
         commissionRate: '分销佣金比例',
         reviewNotePrompt: '请输入审核备注（可留空）',
+        reviewReasonTag: '审核原因标签',
+        reviewNotePlaceholder: '审核备注（可选）',
+        reasonTags: {
+          manualCheck: '人工核验',
+          riskFlag: '风险预警',
+          duplicateAccount: '关联账号重复',
+          policyViolation: '违反规则',
+          other: '其他'
+        },
         batchApprove: '批量通过',
         batchReject: '批量拒绝',
         riskThreshold: '风控阈值',
@@ -1452,6 +1461,9 @@ export default {
         dailyLimitCount: '日提现笔数上限',
         dailyLimitAmount: '日提现金额上限',
         riskHighAmount: '高额风险',
+        riskLevelLow: '低风险',
+        riskLevelMedium: '中风险',
+        riskLevelHigh: '高风险',
         overview: {
           totalDistributors: '分销员总数',
           totalBoundUsers: '已绑定下级用户',
@@ -4418,6 +4430,18 @@ export default {
         defaultSubscriptionsDuplicate: '默认订阅存在重复分组：{groupId}。每个分组只能出现一次。',
         subscriptionGroup: '订阅分组',
         subscriptionValidityDays: '有效期（天）'
+      },
+      distributionWithdrawal: {
+        title: '分销提现风控',
+        description: '配置分销佣金提现的全局风控参数',
+        riskThreshold: '风控阈值',
+        riskThresholdHint: '单笔提现金额超过该值时，标记为高风险。',
+        cooldownDays: '提现冷却天数',
+        cooldownDaysHint: '用户注册后需满足该天数才允许提现。',
+        dailyLimitCount: '每日提现次数上限',
+        dailyLimitCountHint: '每个用户 24 小时内最多可发起的提现申请次数。',
+        dailyLimitAmount: '每日提现总额上限',
+        dailyLimitAmountHint: '每个用户 24 小时内累计提现金额上限。'
       },
       claudeCode: {
         title: 'Claude Code 设置',

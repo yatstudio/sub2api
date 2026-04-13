@@ -1164,6 +1164,80 @@
             </div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.distributionWithdrawal.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.distributionWithdrawal.description') }}
+            </p>
+          </div>
+          <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.distributionWithdrawal.riskThreshold') }}
+              </label>
+              <input
+                v-model.number="form.distribution_withdrawal_risk_threshold"
+                type="number"
+                min="0"
+                step="0.01"
+                class="input"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.distributionWithdrawal.riskThresholdHint') }}
+              </p>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.distributionWithdrawal.cooldownDays') }}
+              </label>
+              <input
+                v-model.number="form.distribution_withdrawal_cooldown_days"
+                type="number"
+                min="0"
+                class="input"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.distributionWithdrawal.cooldownDaysHint') }}
+              </p>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.distributionWithdrawal.dailyLimitCount') }}
+              </label>
+              <input
+                v-model.number="form.distribution_withdrawal_daily_limit_count"
+                type="number"
+                min="0"
+                class="input"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.distributionWithdrawal.dailyLimitCountHint') }}
+              </p>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.distributionWithdrawal.dailyLimitAmount') }}
+              </label>
+              <input
+                v-model.number="form.distribution_withdrawal_daily_limit_amount"
+                type="number"
+                min="0"
+                step="0.01"
+                class="input"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.distributionWithdrawal.dailyLimitAmountHint') }}
+              </p>
+            </div>
+          </div>
+        </div>
         </div><!-- /Tab: Users -->
 
         <!-- Tab: Gateway — Claude Code, Scheduling -->
@@ -2174,6 +2248,11 @@ const form = reactive<SettingsForm>({
   max_claude_code_version: '',
   // 分组隔离
   allow_ungrouped_key_scheduling: false,
+  // Distribution withdrawal risk controls
+  distribution_withdrawal_risk_threshold: 0,
+  distribution_withdrawal_cooldown_days: 0,
+  distribution_withdrawal_daily_limit_count: 1,
+  distribution_withdrawal_daily_limit_amount: 10000,
   // Gateway forwarding behavior
   enable_fingerprint_unification: true,
   enable_metadata_passthrough: false
@@ -2484,6 +2563,10 @@ async function saveSettings() {
       min_claude_code_version: form.min_claude_code_version,
       max_claude_code_version: form.max_claude_code_version,
       allow_ungrouped_key_scheduling: form.allow_ungrouped_key_scheduling,
+      distribution_withdrawal_risk_threshold: Number(form.distribution_withdrawal_risk_threshold || 0),
+      distribution_withdrawal_cooldown_days: Number(form.distribution_withdrawal_cooldown_days || 0),
+      distribution_withdrawal_daily_limit_count: Number(form.distribution_withdrawal_daily_limit_count || 0),
+      distribution_withdrawal_daily_limit_amount: Number(form.distribution_withdrawal_daily_limit_amount || 0),
       enable_fingerprint_unification: form.enable_fingerprint_unification,
       enable_metadata_passthrough: form.enable_metadata_passthrough
     }
