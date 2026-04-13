@@ -11,19 +11,67 @@ const readPath = (input: any, path: string[]): unknown => {
   return current
 }
 
+const DISTRIBUTION_WITHDRAWAL_REASON_MAP: Record<string, string> = {
+  DISTRIBUTION_WITHDRAWAL_COOLDOWN: 'DISTRIBUTION_WITHDRAWAL_COOLDOWN',
+  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT',
+  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT',
+  DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT',
+  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+}
+
+const tryResolveKnownDistributionReason = (value: unknown): string => {
+  if (typeof value !== 'string') return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  const normalized = trimmed.toUpperCase()
+  if (DISTRIBUTION_WITHDRAWAL_REASON_MAP[normalized]) {
+    return DISTRIBUTION_WITHDRAWAL_REASON_MAP[normalized]
+  }
+
+  const lower = trimmed.toLowerCase()
+  if (lower.includes('distribution_withdrawal_daily_amount_limit') || lower.includes('distribution_withdrawal_daily_limit_amount')) {
+    return 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+  }
+  if (lower.includes('distribution_withdrawal_daily_limit_count') || lower.includes('distribution_withdrawal_daily_limit')) {
+    return 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT'
+  }
+  if (lower.includes('distribution_withdrawal_cooldown')) {
+    return 'DISTRIBUTION_WITHDRAWAL_COOLDOWN'
+  }
+
+  return ''
+}
+
 export const extractDistributionWithdrawalReason = (error: unknown): string => {
-  const candidate = [
+  const reasonOrCodeFields = [
     readPath(error, ['reason']),
     readPath(error, ['code']),
     readPath(error, ['response', 'data', 'reason']),
     readPath(error, ['response', 'data', 'code']),
     readPath(error, ['response', 'data', 'error', 'reason']),
-    readPath(error, ['response', 'data', 'error', 'code']),
-    // Keep generic error string as lower-priority fallback.
-    readPath(error, ['error']),
-    readPath(error, ['response', 'data', 'error'])
-  ].find((value) => typeof value === 'string' && String(value).trim() !== '')
+    readPath(error, ['response', 'data', 'error', 'code'])
+  ]
 
+  for (const field of reasonOrCodeFields) {
+    const knownReason = tryResolveKnownDistributionReason(field)
+    if (knownReason) return knownReason
+  }
+
+  const fallbackTextFields = [
+    readPath(error, ['error']),
+    readPath(error, ['response', 'data', 'error']),
+    readPath(error, ['message']),
+    readPath(error, ['response', 'data', 'message']),
+    readPath(error, ['response', 'data', 'error', 'message'])
+  ]
+
+  for (const field of fallbackTextFields) {
+    const knownReason = tryResolveKnownDistributionReason(field)
+    if (knownReason) return knownReason
+  }
+
+  const candidate = reasonOrCodeFields.find((value) => typeof value === 'string' && String(value).trim() !== '')
   return typeof candidate === 'string' ? candidate.trim().toUpperCase() : ''
 }
 

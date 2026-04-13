@@ -28,6 +28,16 @@ describe('distributionWithdrawalError', () => {
       .toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
 
+  it('extracts known reason from free-form message text', () => {
+    expect(extractDistributionWithdrawalReason({
+      response: { data: { message: 'request rejected: distribution_withdrawal_daily_limit_count' } }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      message: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT: cap reached'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+  })
+
   it('prefers structured reason/code over generic error string', () => {
     const reason = extractDistributionWithdrawalReason({
       error: 'request failed',
