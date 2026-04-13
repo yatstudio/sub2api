@@ -19,6 +19,8 @@ var (
 	ErrDistributionWithdrawalAmountInvalid   = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_AMOUNT_INVALID", "withdrawal amount must be greater than 0")
 	ErrDistributionWithdrawalAmountTooSmall      = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_AMOUNT_TOO_SMALL", "withdrawal amount is below minimum")
 	ErrDistributionWithdrawalDailyLimit          = infraerrors.TooManyRequests("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT", "daily withdrawal request limit reached")
+	ErrDistributionWithdrawalDailyAmountLimit    = infraerrors.TooManyRequests("DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT", "daily withdrawal amount limit reached")
+	ErrDistributionWithdrawalCooldown            = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_COOLDOWN", "withdrawal is in cooldown period")
 	ErrDistributionWithdrawalAccountRequired     = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_ACCOUNT_REQUIRED", "withdrawal account is required")
 	ErrDistributionWithdrawalAccountTypeRequired = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_ACCOUNT_TYPE_REQUIRED", "withdrawal account type is required")
 	ErrDistributionWithdrawalAccountTypeTooLong  = infraerrors.BadRequest("DISTRIBUTION_WITHDRAWAL_ACCOUNT_TYPE_TOO_LONG", "withdrawal account type is too long")
@@ -92,7 +94,10 @@ type DistributionOverview struct {
 }
 
 type DistributionRiskSettings struct {
-	WithdrawalRiskThreshold float64 `json:"withdrawal_risk_threshold"`
+	WithdrawalRiskThreshold  float64 `json:"withdrawal_risk_threshold"`
+	WithdrawalCooldownDays   int     `json:"withdrawal_cooldown_days"`
+	WithdrawalDailyLimitCount int    `json:"withdrawal_daily_limit_count"`
+	WithdrawalDailyLimitAmount float64 `json:"withdrawal_daily_limit_amount"`
 }
 
 type DistributionFunnelItem struct {

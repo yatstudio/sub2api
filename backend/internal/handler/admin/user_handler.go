@@ -408,7 +408,10 @@ type UpdateDistributionCommissionRateRequest struct {
 }
 
 type UpdateDistributionRiskSettingsRequest struct {
-	WithdrawalRiskThreshold float64 `json:"withdrawal_risk_threshold" binding:"required,gte=0"`
+	WithdrawalRiskThreshold   float64 `json:"withdrawal_risk_threshold" binding:"required,gte=0"`
+	WithdrawalCooldownDays    int     `json:"withdrawal_cooldown_days" binding:"omitempty,gte=0"`
+	WithdrawalDailyLimitCount int     `json:"withdrawal_daily_limit_count" binding:"omitempty,gte=0"`
+	WithdrawalDailyLimitAmount float64 `json:"withdrawal_daily_limit_amount" binding:"omitempty,gte=0"`
 }
 
 // GetDistributionRiskSettings handles getting distribution risk settings
@@ -432,7 +435,12 @@ func (h *UserHandler) UpdateDistributionRiskSettings(c *gin.Context) {
 		return
 	}
 
-	settings, err := h.adminService.UpdateDistributionRiskSettings(c.Request.Context(), req.WithdrawalRiskThreshold)
+	settings, err := h.adminService.UpdateDistributionRiskSettings(c.Request.Context(), service.DistributionRiskSettings{
+		WithdrawalRiskThreshold: req.WithdrawalRiskThreshold,
+		WithdrawalCooldownDays: req.WithdrawalCooldownDays,
+		WithdrawalDailyLimitCount: req.WithdrawalDailyLimitCount,
+		WithdrawalDailyLimitAmount: req.WithdrawalDailyLimitAmount,
+	})
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

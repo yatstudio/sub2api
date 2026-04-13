@@ -265,6 +265,9 @@ export interface DistributionOverview {
 
 export interface DistributionRiskSettings {
   withdrawal_risk_threshold: number
+  withdrawal_cooldown_days: number
+  withdrawal_daily_limit_count: number
+  withdrawal_daily_limit_amount: number
 }
 
 export interface DistributionFunnelItem {
@@ -293,10 +296,13 @@ export async function getDistributionRiskSettings(): Promise<DistributionRiskSet
   return data
 }
 
-export async function updateDistributionRiskSettings(withdrawalRiskThreshold: number): Promise<DistributionRiskSettings> {
-  const { data } = await apiClient.put<DistributionRiskSettings>('/admin/users/distribution/risk-settings', {
-    withdrawal_risk_threshold: withdrawalRiskThreshold
-  })
+export async function updateDistributionRiskSettings(payload: {
+  withdrawal_risk_threshold: number
+  withdrawal_cooldown_days?: number
+  withdrawal_daily_limit_count?: number
+  withdrawal_daily_limit_amount?: number
+}): Promise<DistributionRiskSettings> {
+  const { data } = await apiClient.put<DistributionRiskSettings>('/admin/users/distribution/risk-settings', payload)
   return data
 }
 

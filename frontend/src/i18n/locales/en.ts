@@ -1416,12 +1416,18 @@ export default {
         batchApprove: 'Batch Approve',
         batchReject: 'Batch Reject',
         riskThreshold: 'Risk Threshold',
+        cooldownDays: 'Cooldown Days',
+        dailyLimitCount: 'Daily Withdrawal Count Limit',
+        dailyLimitAmount: 'Daily Withdrawal Amount Limit',
         riskHighAmount: 'High-Risk Amount',
         overview: {
           totalDistributors: 'Total Distributors',
           totalBoundUsers: 'Bound Downline Users',
           pendingWithdrawalCount: 'Pending Withdrawals',
-          pendingWithdrawalAmount: 'Pending Withdrawal Amount'
+          pendingWithdrawalAmount: 'Pending Withdrawal Amount',
+          pendingAvgAgeHours: 'Avg Pending Age (hours)',
+          dailyReviewCount: 'Reviewed Today',
+          approveRate7d: '7-Day Approval Rate'
         },
         funnel: {
           title: 'Source Funnel (Attributed → Topup)',

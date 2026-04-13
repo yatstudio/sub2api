@@ -77,9 +77,15 @@
                 <option value="approved">{{ t('distribution.statusApproved') }}</option>
                 <option value="rejected">{{ t('distribution.statusRejected') }}</option>
               </select>
-              <div class="flex items-center gap-2 rounded-lg border border-indigo-200/70 px-2 py-1 dark:border-indigo-900/50">
+              <div class="flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200/70 px-2 py-1 dark:border-indigo-900/50">
                 <span class="text-xs text-gray-500">{{ t('admin.users.distribution.riskThreshold') }}</span>
                 <input v-model.number="riskThresholdInput" type="number" min="0" step="10" class="input w-24" />
+                <span class="text-xs text-gray-500">{{ t('admin.users.distribution.cooldownDays') }}</span>
+                <input v-model.number="riskCooldownDaysInput" type="number" min="0" step="1" class="input w-20" />
+                <span class="text-xs text-gray-500">{{ t('admin.users.distribution.dailyLimitCount') }}</span>
+                <input v-model.number="riskDailyLimitCountInput" type="number" min="0" step="1" class="input w-20" />
+                <span class="text-xs text-gray-500">{{ t('admin.users.distribution.dailyLimitAmount') }}</span>
+                <input v-model.number="riskDailyLimitAmountInput" type="number" min="0" step="10" class="input w-24" />
                 <button class="btn" :disabled="savingRiskThreshold" @click="saveRiskThreshold">{{ savingRiskThreshold ? t('common.loading') : t('common.save') }}</button>
               </div>
               <button class="btn btn-primary" :disabled="selectedPendingIds.length === 0 || batchReviewing" @click="batchReview('approved')">
@@ -147,6 +153,9 @@ const savingRiskThreshold = ref(false)
 
 const riskThreshold = ref(1000)
 const riskThresholdInput = ref(1000)
+const riskCooldownDaysInput = ref(0)
+const riskDailyLimitCountInput = ref(1)
+const riskDailyLimitAmountInput = ref(10000)
 const selectedPendingIds = ref<number[]>([])
 
 const profile = ref<DistributionProfile | null>(null)
@@ -202,6 +211,9 @@ const load = async () => {
     commissionRateInput.value = Number(p.commission_rate || 0)
     riskThreshold.value = Number(riskSettings.withdrawal_risk_threshold || 0)
     riskThresholdInput.value = riskThreshold.value
+    riskCooldownDaysInput.value = Number(riskSettings.withdrawal_cooldown_days || 0)
+    riskDailyLimitCountInput.value = Number(riskSettings.withdrawal_daily_limit_count || 0)
+    riskDailyLimitAmountInput.value = Number(riskSettings.withdrawal_daily_limit_amount || 0)
     await Promise.all([loadTeam(), loadWithdrawals()])
   } catch (error: any) {
     appStore.showError(error?.message || t('distribution.loadFailed'))
@@ -233,9 +245,17 @@ const changeTeamLevel = async (level: 1 | 2) => {
 const saveRiskThreshold = async () => {
   savingRiskThreshold.value = true
   try {
-    const saved = await adminAPI.users.updateDistributionRiskSettings(Number(riskThresholdInput.value || 0))
+    const saved = await adminAPI.users.updateDistributionRiskSettings({
+      withdrawal_risk_threshold: Number(riskThresholdInput.value || 0),
+      withdrawal_cooldown_days: Number(riskCooldownDaysInput.value || 0),
+      withdrawal_daily_limit_count: Number(riskDailyLimitCountInput.value || 0),
+      withdrawal_daily_limit_amount: Number(riskDailyLimitAmountInput.value || 0)
+    })
     riskThreshold.value = Number(saved.withdrawal_risk_threshold || 0)
     riskThresholdInput.value = riskThreshold.value
+    riskCooldownDaysInput.value = Number(saved.withdrawal_cooldown_days || 0)
+    riskDailyLimitCountInput.value = Number(saved.withdrawal_daily_limit_count || 0)
+    riskDailyLimitAmountInput.value = Number(saved.withdrawal_daily_limit_amount || 0)
     appStore.showSuccess(t('common.saved'))
   } catch (error: any) {
     appStore.showError(error?.message || t('errors.somethingWentWrong'))

@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
+	"time"
 
 	dbuser "github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
@@ -25,11 +27,20 @@ const (
 	distributionWithdrawalStatusRejected = "rejected"
 
 	minDistributionWithdrawalAmount      = 10.0
-	distributionWithdrawalDailyLimit     = 1
 	maxDistributionAccountTypeLength     = 32
 	maxDistributionAccountRefLength      = 128
 	maxDistributionWithdrawalNotesLength = 200
+
+	defaultDistributionWithdrawalCooldownDays   = 0
+	defaultDistributionWithdrawalDailyLimitCount = int64(1)
+	defaultDistributionWithdrawalDailyLimitAmount = 10000.0
 )
+
+type distributionWithdrawalRules struct {
+	CooldownDays   int
+	DailyLimitCount int64
+	DailyLimitAmount float64
+}
 
 func (r *userRepository) GetDistributionProfile(ctx context.Context, userID int64) (*service.DistributionProfile, error) {
 	if err := r.ensureDistributionProfile(ctx, userID); err != nil {
@@ -647,6 +658,58 @@ func (r *userRepository) ListDistributionCommissions(ctx context.Context, invite
 	return items, paginationResultFromTotal(total, params), nil
 }
 
+func (r *userRepository) loadDistributionWithdrawalRules(ctx context.Context, tx *sql.Tx) (distributionWithdrawalRules, error) {
+	rules := distributionWithdrawalRules{
+		CooldownDays:   defaultDistributionWithdrawalCooldownDays,
+		DailyLimitCount: defaultDistributionWithdrawalDailyLimitCount,
+		DailyLimitAmount: defaultDistributionWithdrawalDailyLimitAmount,
+	}
+
+	rows, err := tx.QueryContext(ctx, `
+		SELECT key, value
+		FROM settings
+		WHERE key = ANY($1)
+	`, pq.Array([]string{
+		service.SettingKeyDistributionWithdrawalCooldownDays,
+		service.SettingKeyDistributionWithdrawalDailyLimitCount,
+		service.SettingKeyDistributionWithdrawalDailyLimitAmount,
+	}))
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "settings") {
+			return rules, nil
+		}
+		return rules, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var key, value string
+		if err := rows.Scan(&key, &value); err != nil {
+			return rules, err
+		}
+		trimmed := strings.TrimSpace(value)
+		switch key {
+		case service.SettingKeyDistributionWithdrawalCooldownDays:
+			if v, err := strconv.Atoi(trimmed); err == nil && v >= 0 {
+				rules.CooldownDays = v
+			}
+		case service.SettingKeyDistributionWithdrawalDailyLimitCount:
+			if v, err := strconv.ParseInt(trimmed, 10, 64); err == nil && v >= 0 {
+				rules.DailyLimitCount = v
+			}
+		case service.SettingKeyDistributionWithdrawalDailyLimitAmount:
+			if v, err := strconv.ParseFloat(trimmed, 64); err == nil && v >= 0 {
+				rules.DailyLimitAmount = v
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return rules, err
+	}
+
+	return rules, nil
+}
+
 func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context, userID int64, amount float64, accountType, accountRef, notes string) (*service.DistributionWithdrawalRequest, error) {
 	if amount <= 0 {
 		return nil, service.ErrDistributionWithdrawalAmountInvalid
@@ -720,17 +783,42 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 		return nil, service.ErrDistributionWithdrawalPendingExists
 	}
 
-	var dailyCount int64
+	rules, err := r.loadDistributionWithdrawalRules(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if rules.CooldownDays > 0 {
+		var userCreatedAt time.Time
+		if err := tx.QueryRowContext(ctx, `SELECT created_at FROM users WHERE id = $1`, userID).Scan(&userCreatedAt); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, service.ErrUserNotFound
+			}
+			return nil, err
+		}
+		cooldownUntil := userCreatedAt.Add(time.Duration(rules.CooldownDays) * 24 * time.Hour)
+		if time.Now().Before(cooldownUntil) {
+			return nil, service.ErrDistributionWithdrawalCooldown
+		}
+	}
+
+	var (
+		dailyCount  int64
+		dailyAmount float64
+	)
 	if err := tx.QueryRowContext(ctx, `
-		SELECT COUNT(1)
+		SELECT COUNT(1), COALESCE(SUM(amount), 0)::DECIMAL(20,8)
 		FROM distribution_withdrawal_requests
 		WHERE user_id = $1
 		  AND created_at >= NOW() - INTERVAL '24 hours'
-	`, userID).Scan(&dailyCount); err != nil {
+	`, userID).Scan(&dailyCount, &dailyAmount); err != nil {
 		return nil, err
 	}
-	if dailyCount >= distributionWithdrawalDailyLimit {
+	if rules.DailyLimitCount > 0 && dailyCount >= rules.DailyLimitCount {
 		return nil, service.ErrDistributionWithdrawalDailyLimit
+	}
+	if rules.DailyLimitAmount > 0 && (dailyAmount+amount) > rules.DailyLimitAmount {
+		return nil, service.ErrDistributionWithdrawalDailyAmountLimit
 	}
 
 	available := totalEarned - totalWithdrawn - pendingAmount

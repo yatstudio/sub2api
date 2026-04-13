@@ -238,6 +238,12 @@ const (
 
 	// SettingKeyDistributionWithdrawalRiskThreshold 分销提现高额风控阈值（美元）
 	SettingKeyDistributionWithdrawalRiskThreshold = "distribution_withdrawal_risk_threshold"
+	// SettingKeyDistributionWithdrawalCooldownDays 新用户提现冷却期（天）
+	SettingKeyDistributionWithdrawalCooldownDays = "distribution_withdrawal_cooldown_days"
+	// SettingKeyDistributionWithdrawalDailyLimitCount 单日提现次数上限
+	SettingKeyDistributionWithdrawalDailyLimitCount = "distribution_withdrawal_daily_limit_count"
+	// SettingKeyDistributionWithdrawalDailyLimitAmount 单日提现金额上限（美元）
+	SettingKeyDistributionWithdrawalDailyLimitAmount = "distribution_withdrawal_daily_limit_amount"
 
 	// Gateway Forwarding Behavior
 	// SettingKeyEnableFingerprintUnification 是否统一 OAuth 账号的 X-Stainless-* 指纹头（默认 true）

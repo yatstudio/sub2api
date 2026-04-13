@@ -37,7 +37,7 @@ type AdminService interface {
 	ReviewUserDistributionWithdrawal(ctx context.Context, userID, withdrawalID int64, status, reviewNote string, reviewerUserID int64) (*DistributionWithdrawalRequest, error)
 	SetUserDistributionCommissionRate(ctx context.Context, userID int64, rate float64) error
 	GetDistributionRiskSettings(ctx context.Context) (*DistributionRiskSettings, error)
-	UpdateDistributionRiskSettings(ctx context.Context, threshold float64) (*DistributionRiskSettings, error)
+	UpdateDistributionRiskSettings(ctx context.Context, req DistributionRiskSettings) (*DistributionRiskSettings, error)
 	GetUserAPIKeys(ctx context.Context, userID int64, page, pageSize int) ([]APIKey, int64, error)
 	GetUserUsageStats(ctx context.Context, userID int64, period string) (any, error)
 	// GetUserBalanceHistory returns paginated balance/concurrency change records for a user.
@@ -809,31 +809,58 @@ func (s *adminServiceImpl) ReviewUserDistributionWithdrawal(ctx context.Context,
 
 func (s *adminServiceImpl) GetDistributionRiskSettings(ctx context.Context) (*DistributionRiskSettings, error) {
 	if s.settingService == nil {
-		return &DistributionRiskSettings{WithdrawalRiskThreshold: 1000}, nil
+		return &DistributionRiskSettings{
+			WithdrawalRiskThreshold:   1000,
+			WithdrawalCooldownDays:    0,
+			WithdrawalDailyLimitCount: 1,
+			WithdrawalDailyLimitAmount: 10000,
+		}, nil
 	}
 	settings, err := s.settingService.GetAllSettings(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &DistributionRiskSettings{WithdrawalRiskThreshold: settings.DistributionWithdrawalRiskThreshold}, nil
+	return &DistributionRiskSettings{
+		WithdrawalRiskThreshold:   settings.DistributionWithdrawalRiskThreshold,
+		WithdrawalCooldownDays:    settings.DistributionWithdrawalCooldownDays,
+		WithdrawalDailyLimitCount: settings.DistributionWithdrawalDailyLimitCount,
+		WithdrawalDailyLimitAmount: settings.DistributionWithdrawalDailyLimitAmount,
+	}, nil
 }
 
-func (s *adminServiceImpl) UpdateDistributionRiskSettings(ctx context.Context, threshold float64) (*DistributionRiskSettings, error) {
+func (s *adminServiceImpl) UpdateDistributionRiskSettings(ctx context.Context, req DistributionRiskSettings) (*DistributionRiskSettings, error) {
 	if s.settingService == nil {
 		return nil, fmt.Errorf("setting service unavailable")
 	}
-	if threshold < 0 {
-		threshold = 0
+	if req.WithdrawalRiskThreshold < 0 {
+		req.WithdrawalRiskThreshold = 0
+	}
+	if req.WithdrawalCooldownDays < 0 {
+		req.WithdrawalCooldownDays = 0
+	}
+	if req.WithdrawalDailyLimitCount < 0 {
+		req.WithdrawalDailyLimitCount = 0
+	}
+	if req.WithdrawalDailyLimitAmount < 0 {
+		req.WithdrawalDailyLimitAmount = 0
 	}
 	settings, err := s.settingService.GetAllSettings(ctx)
 	if err != nil {
 		return nil, err
 	}
-	settings.DistributionWithdrawalRiskThreshold = threshold
+	settings.DistributionWithdrawalRiskThreshold = req.WithdrawalRiskThreshold
+	settings.DistributionWithdrawalCooldownDays = req.WithdrawalCooldownDays
+	settings.DistributionWithdrawalDailyLimitCount = req.WithdrawalDailyLimitCount
+	settings.DistributionWithdrawalDailyLimitAmount = req.WithdrawalDailyLimitAmount
 	if err := s.settingService.UpdateSettings(ctx, settings); err != nil {
 		return nil, err
 	}
-	return &DistributionRiskSettings{WithdrawalRiskThreshold: threshold}, nil
+	return &DistributionRiskSettings{
+		WithdrawalRiskThreshold: req.WithdrawalRiskThreshold,
+		WithdrawalCooldownDays: req.WithdrawalCooldownDays,
+		WithdrawalDailyLimitCount: req.WithdrawalDailyLimitCount,
+		WithdrawalDailyLimitAmount: req.WithdrawalDailyLimitAmount,
+	}, nil
 }
 
 func (s *adminServiceImpl) UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*User, error) {

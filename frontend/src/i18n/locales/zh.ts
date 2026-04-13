@@ -1443,12 +1443,18 @@ export default {
         batchApprove: '批量通过',
         batchReject: '批量拒绝',
         riskThreshold: '风控阈值',
+        cooldownDays: '冷却天数',
+        dailyLimitCount: '日提现笔数上限',
+        dailyLimitAmount: '日提现金额上限',
         riskHighAmount: '高额风险',
         overview: {
           totalDistributors: '分销员总数',
           totalBoundUsers: '已绑定下级用户',
           pendingWithdrawalCount: '待审核提现单',
-          pendingWithdrawalAmount: '待审核提现金额'
+          pendingWithdrawalAmount: '待审核提现金额',
+          pendingAvgAgeHours: '待审平均时长',
+          dailyReviewCount: '今日处理单数',
+          approveRate7d: '近7日通过率'
         },
         funnel: {
           title: '渠道漏斗（归因→首充）',
