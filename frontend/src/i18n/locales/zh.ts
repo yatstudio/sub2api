@@ -943,7 +943,12 @@ export default {
     loadFailed: '加载分销数据失败',
     statusPending: '待审核',
     statusApproved: '已通过',
-    statusRejected: '已拒绝'
+    statusRejected: '已拒绝',
+    withdrawalErrors: {
+      cooldown: '当前处于提现冷却期，请稍后再试',
+      dailyLimitCount: '今日提现次数已达上限',
+      dailyLimitAmount: '今日提现金额已达上限'
+    }
   },
 
   // Empty States

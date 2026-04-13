@@ -369,6 +369,14 @@ const statusClass = (status: string) => {
   return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
 }
 
+const withdrawalErrorMessage = (error: any) => {
+  const reason = String(error?.reason || error?.code || '').toUpperCase()
+  if (reason === 'DISTRIBUTION_WITHDRAWAL_COOLDOWN') return t('distribution.withdrawalErrors.cooldown')
+  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT') return t('distribution.withdrawalErrors.dailyLimitCount')
+  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT') return t('distribution.withdrawalErrors.dailyLimitAmount')
+  return error?.message || t('distribution.loadFailed')
+}
+
 const loadCore = async () => {
   const [p, s, r] = await Promise.all([
     userAPI.getDistributionProfile(),
@@ -437,7 +445,7 @@ const submitWithdrawal = async () => {
     withdrawForm.value = { amount: 0, account_type: '', account_ref: '', notes: '' }
     await loadAll()
   } catch (error: any) {
-    appStore.showError(error?.message || t('distribution.loadFailed'))
+    appStore.showError(withdrawalErrorMessage(error))
   } finally {
     submittingWithdrawal.value = false
   }

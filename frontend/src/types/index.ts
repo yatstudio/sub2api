@@ -307,12 +307,16 @@ export interface UserStats {
 export interface ApiResponse<T = unknown> {
   code: number
   message: string
+  reason?: string
+  metadata?: Record<string, string>
   data: T
 }
 
 export interface ApiError {
   detail: string
   code?: string
+  reason?: string
+  metadata?: Record<string, string>
   field?: string
 }
 

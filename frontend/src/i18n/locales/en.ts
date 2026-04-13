@@ -938,7 +938,12 @@ export default {
     loadFailed: 'Failed to load distribution data',
     statusPending: 'Pending',
     statusApproved: 'Approved',
-    statusRejected: 'Rejected'
+    statusRejected: 'Rejected',
+    withdrawalErrors: {
+      cooldown: 'You are still in the withdrawal cooldown period. Please try again later.',
+      dailyLimitCount: 'Daily withdrawal request limit reached.',
+      dailyLimitAmount: 'Daily withdrawal amount limit reached.'
+    }
   },
 
   // Empty States
