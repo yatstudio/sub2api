@@ -81,6 +81,7 @@ def static_verify() -> list[str]:
         [
             ("TestSettingHandler_GetSettings_IncludesDistributionWithdrawalRiskControls", "P0 handler read persisted regression"),
             ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler read clamp regression"),
+            ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults", "P0 handler read invalid raw values fallback regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_Persisted", "P0 handler write persisted regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler write clamp regression"),
             ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_IncludeAllFourFields", "P0 handler audit changed-keys include all four controls"),
@@ -97,7 +98,25 @@ def static_verify() -> list[str]:
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults", "P0 service read invalid raw values fallback regression"),
         ],
     )
-    checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp)")
+    require_all(
+        setting_handler_test,
+        [
+            ("require.Equal(t, 1000.0, resp.Data.RiskThreshold)", "P0 handler invalid raw fallback default threshold"),
+            ("require.Equal(t, 0, resp.Data.CooldownDays)", "P0 handler invalid raw fallback default cooldown days"),
+            ("require.Equal(t, 1, resp.Data.DailyLimitCount)", "P0 handler invalid raw fallback default daily count"),
+            ("require.Equal(t, 10000.0, resp.Data.DailyLimitAmt)", "P0 handler invalid raw fallback default daily amount"),
+        ],
+    )
+    require_all(
+        setting_service_test,
+        [
+            ("require.Equal(t, 1000.0, settings.DistributionWithdrawalRiskThreshold)", "P0 service invalid raw fallback default threshold"),
+            ("require.Equal(t, 0, settings.DistributionWithdrawalCooldownDays)", "P0 service invalid raw fallback default cooldown days"),
+            ("require.Equal(t, 1, settings.DistributionWithdrawalDailyLimitCount)", "P0 service invalid raw fallback default daily count"),
+            ("require.Equal(t, 10000.0, settings.DistributionWithdrawalDailyLimitAmount)", "P0 service invalid raw fallback default daily amount"),
+        ],
+    )
+    checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp + invalid-raw fallback defaults)")
 
     require_all(
         setting_handler,
