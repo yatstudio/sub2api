@@ -270,6 +270,23 @@ func TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ClampN
 	require.Equal(t, float64(0), settings.DistributionWithdrawalDailyLimitAmount)
 }
 
+func TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults(t *testing.T) {
+	repo := &settingUpdateRepoStub{all: map[string]string{
+		SettingKeyDistributionWithdrawalRiskThreshold:   "invalid-number",
+		SettingKeyDistributionWithdrawalCooldownDays:    "invalid-days",
+		SettingKeyDistributionWithdrawalDailyLimitCount: "invalid-count",
+		SettingKeyDistributionWithdrawalDailyLimitAmount: "invalid-amount",
+	}}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetAllSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 1000.0, settings.DistributionWithdrawalRiskThreshold)
+	require.Equal(t, 0, settings.DistributionWithdrawalCooldownDays)
+	require.Equal(t, 1, settings.DistributionWithdrawalDailyLimitCount)
+	require.Equal(t, 10000.0, settings.DistributionWithdrawalDailyLimitAmount)
+}
+
 func TestParseDefaultSubscriptions_NormalizesValues(t *testing.T) {
 	got := parseDefaultSubscriptions(`[{"group_id":11,"validity_days":30},{"group_id":11,"validity_days":60},{"group_id":0,"validity_days":10},{"group_id":12,"validity_days":99999}]`)
 	require.Equal(t, []DefaultSubscriptionSetting{

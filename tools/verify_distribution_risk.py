@@ -84,6 +84,7 @@ def static_verify() -> list[str]:
             ("TestSettingService_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 service write clamp regression"),
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ReadPersisted", "P0 service read persisted regression"),
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 service read clamp regression"),
+            ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults", "P0 service read invalid raw values fallback regression"),
         ],
     )
     checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp)")
