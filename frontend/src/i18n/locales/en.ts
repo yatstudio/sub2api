@@ -1455,6 +1455,12 @@ export default {
           topupUsers: 'Topup Users',
           withdrawalRequests: 'Withdrawal Requests',
           approvedWithdrawals: 'Approved Withdrawals'
+        },
+        tiers: {
+          newbie: 'Newbie',
+          active: 'Active',
+          highPotential: 'High Potential',
+          dormant: 'Dormant'
         }
       },
       group: 'Group',

@@ -64,6 +64,11 @@ export interface DistributionSourceStat {
   count: number
 }
 
+export interface DistributionTierStat {
+  tier: 'newbie' | 'active' | 'high_potential' | 'dormant' | string
+  count: number
+}
+
 export interface DistributionSummary {
   user_id: number
   invite_code: string

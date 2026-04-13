@@ -1482,6 +1482,12 @@ export default {
           topupUsers: '首充用户',
           withdrawalRequests: '提现申请数',
           approvedWithdrawals: '提现通过数'
+        },
+        tiers: {
+          newbie: '新手',
+          active: '活跃',
+          highPotential: '高潜',
+          dormant: '沉默'
         }
       },
       group: '分组',

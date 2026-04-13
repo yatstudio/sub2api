@@ -11,7 +11,8 @@ import type {
   DistributionTeamMember,
   DistributionCommissionRecord,
   DistributionWithdrawalRequest,
-  DistributionSourceStat
+  DistributionSourceStat,
+  DistributionTierStat
 } from '@/api/user'
 
 /**
@@ -261,6 +262,7 @@ export interface DistributionOverview {
   daily_review_count: number
   approve_rate_7d: number
   source_stats?: DistributionSourceStat[]
+  tier_stats?: DistributionTierStat[]
 }
 
 export interface DistributionRiskSettings {

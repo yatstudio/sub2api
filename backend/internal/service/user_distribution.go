@@ -84,6 +84,11 @@ type DistributionSourceStat struct {
 	Count    int64  `json:"count"`
 }
 
+type DistributionTierStat struct {
+	Tier  string `json:"tier"`
+	Count int64  `json:"count"`
+}
+
 type DistributionOverview struct {
 	TotalDistributors       int64                    `json:"total_distributors"`
 	TotalBoundUsers         int64                    `json:"total_bound_users"`
@@ -93,6 +98,7 @@ type DistributionOverview struct {
 	DailyReviewCount        int64                    `json:"daily_review_count"`
 	ApproveRate7d           float64                  `json:"approve_rate_7d"`
 	SourceStats             []DistributionSourceStat `json:"source_stats,omitempty"`
+	TierStats               []DistributionTierStat   `json:"tier_stats,omitempty"`
 }
 
 type DistributionRiskSettings struct {

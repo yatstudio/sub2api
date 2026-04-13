@@ -264,6 +264,37 @@ func (r *userRepository) GetDistributionOverview(ctx context.Context) (*service.
 	}
 	overview.SourceStats = sourceStats
 
+	tierRows, err := r.sql.QueryContext(ctx, `
+		SELECT
+			CASE
+				WHEN total_referrals >= 20 OR total_commission_earned >= 5000 THEN 'high_potential'
+				WHEN total_referrals >= 1 OR total_commission_earned >= 100 THEN 'active'
+				WHEN created_at >= NOW() - INTERVAL '14 days' THEN 'newbie'
+				ELSE 'dormant'
+			END AS tier,
+			COUNT(1) AS count
+		FROM user_distributions
+		GROUP BY tier
+		ORDER BY count DESC, tier ASC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tierRows.Close() }()
+
+	tierStats := make([]service.DistributionTierStat, 0, 4)
+	for tierRows.Next() {
+		var item service.DistributionTierStat
+		if scanErr := tierRows.Scan(&item.Tier, &item.Count); scanErr != nil {
+			return nil, scanErr
+		}
+		tierStats = append(tierStats, item)
+	}
+	if rowsErr := tierRows.Err(); rowsErr != nil {
+		return nil, rowsErr
+	}
+	overview.TierStats = tierStats
+
 	return overview, nil
 }
 
