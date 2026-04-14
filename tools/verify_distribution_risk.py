@@ -151,6 +151,10 @@ def static_verify() -> list[str]:
             ("require.Equal(t, \"0\", repo.settings[service.SettingKeyDistributionWithdrawalCooldownDays])", "P0 handler write clamp persisted cooldown days"),
             ("require.Equal(t, \"0\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitCount])", "P0 handler write clamp persisted daily count"),
             ("require.Equal(t, \"0.00000000\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitAmount])", "P0 handler write clamp persisted daily amount"),
+            ("require.Equal(t, 1000.0, resp.Data.RiskThreshold)", "P0 handler mixed raw fallback default threshold"),
+            ("require.Equal(t, 6, resp.Data.CooldownDays)", "P0 handler mixed raw keeps valid cooldown"),
+            ("require.Equal(t, 0, resp.Data.DailyLimitCount)", "P0 handler mixed raw clamps negative daily count"),
+            ("require.Equal(t, 2500.5, resp.Data.DailyLimitAmt)", "P0 handler mixed raw keeps valid daily amount"),
         ],
     )
     require_all(
@@ -164,9 +168,13 @@ def static_verify() -> list[str]:
             ("require.Equal(t, 0, settings.DistributionWithdrawalCooldownDays)", "P0 service read clamp cooldown days"),
             ("require.Equal(t, 0, settings.DistributionWithdrawalDailyLimitCount)", "P0 service read clamp daily count"),
             ("require.Equal(t, float64(0), settings.DistributionWithdrawalDailyLimitAmount)", "P0 service read clamp daily amount"),
+            ("require.Equal(t, 1000.0, settings.DistributionWithdrawalRiskThreshold)", "P0 service mixed raw fallback default threshold"),
+            ("require.Equal(t, 6, settings.DistributionWithdrawalCooldownDays)", "P0 service mixed raw keeps valid cooldown"),
+            ("require.Equal(t, 0, settings.DistributionWithdrawalDailyLimitCount)", "P0 service mixed raw clamps negative daily count"),
+            ("require.Equal(t, 2500.5, settings.DistributionWithdrawalDailyLimitAmount)", "P0 service mixed raw keeps valid daily amount"),
         ],
     )
-    checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp + invalid-raw fallback defaults)")
+    checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp + invalid-raw and mixed-raw per-field fallback/default semantics)")
 
     require_all(
         setting_handler,
