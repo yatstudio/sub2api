@@ -88,6 +88,7 @@ def static_verify() -> list[str]:
     setting_handler = ROOT / "backend/internal/handler/admin/setting_handler.go"
     setting_service = ROOT / "backend/internal/service/setting_service.go"
     withdrawal_util = ROOT / "frontend/src/utils/distributionWithdrawalError.ts"
+    withdrawal_error_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.spec.ts"
     withdrawal_locale_message_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts"
     zh_locale = ROOT / "frontend/src/i18n/locales/zh.ts"
     en_locale = ROOT / "frontend/src/i18n/locales/en.ts"
@@ -197,12 +198,20 @@ def static_verify() -> list[str]:
         ],
     )
     require_all(
+        withdrawal_error_spec,
+        [
+            ("top-level data.code payload shape", "P1 reason extractor spec covers top-level data.code payload shape"),
+            ("data: { message: 'raw backend msg from data' }", "P1 message fallback spec covers top-level data.message payload shape"),
+        ],
+    )
+    require_all(
         withdrawal_locale_message_spec,
         [
             ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT", "P1 locale-message spec covers daily-count alias reason code"),
             ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT", "P1 locale-message spec covers daily-amount alias reason code"),
             ("distribution_withdrawal_daily_limit_count", "P1 locale-message spec covers message-token fallback for daily-count"),
             ("distribution_withdrawal_daily_limit_amount", "P1 locale-message spec covers message-token fallback for daily-amount"),
+            ("data: { error: { message:", "P1 locale-message spec covers top-level data.error.message payload shape"),
         ],
     )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")

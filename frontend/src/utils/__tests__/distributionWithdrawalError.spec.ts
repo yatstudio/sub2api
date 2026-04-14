@@ -33,6 +33,16 @@ describe('distributionWithdrawalError', () => {
     expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
 
+  it('extracts reason from top-level data.code payload shape', () => {
+    const reason = extractDistributionWithdrawalReason({
+      data: {
+        code: 'distribution_withdrawal_daily_limit_count'
+      }
+    })
+
+    expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+  })
+
   it('extracts reason when backend returns plain string error code', () => {
     expect(extractDistributionWithdrawalReason({ error: 'distribution_withdrawal_cooldown' }))
       .toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
@@ -110,6 +120,8 @@ describe('distributionWithdrawalError', () => {
   it('falls back to backend message then fallback key', () => {
     expect(resolveDistributionWithdrawalErrorMessage({ response: { data: { message: 'raw backend msg' } } }, t))
       .toBe('raw backend msg')
+    expect(resolveDistributionWithdrawalErrorMessage({ data: { message: 'raw backend msg from data' } }, t))
+      .toBe('raw backend msg from data')
     expect(resolveDistributionWithdrawalErrorMessage({}, t))
       .toBe('t:distribution.loadFailed')
   })

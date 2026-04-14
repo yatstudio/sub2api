@@ -47,6 +47,10 @@ export const extractDistributionWithdrawalReason = (error: unknown): string => {
   const reasonOrCodeFields = [
     readPath(error, ['reason']),
     readPath(error, ['code']),
+    readPath(error, ['data', 'reason']),
+    readPath(error, ['data', 'code']),
+    readPath(error, ['data', 'error', 'reason']),
+    readPath(error, ['data', 'error', 'code']),
     readPath(error, ['response', 'data', 'reason']),
     readPath(error, ['response', 'data', 'code']),
     readPath(error, ['response', 'data', 'error', 'reason']),
@@ -60,9 +64,12 @@ export const extractDistributionWithdrawalReason = (error: unknown): string => {
 
   const fallbackTextFields = [
     readPath(error, ['error']),
+    readPath(error, ['data', 'error']),
     readPath(error, ['response', 'data', 'error']),
     readPath(error, ['message']),
+    readPath(error, ['data', 'message']),
     readPath(error, ['response', 'data', 'message']),
+    readPath(error, ['data', 'error', 'message']),
     readPath(error, ['response', 'data', 'error', 'message'])
   ]
 
@@ -78,7 +85,9 @@ export const extractDistributionWithdrawalReason = (error: unknown): string => {
 const extractDistributionWithdrawalMessage = (error: unknown): string => {
   const candidate = [
     readPath(error, ['message']),
+    readPath(error, ['data', 'message']),
     readPath(error, ['response', 'data', 'message']),
+    readPath(error, ['data', 'error', 'message']),
     readPath(error, ['response', 'data', 'error', 'message'])
   ].find((value) => typeof value === 'string' && String(value).trim() !== '')
 
