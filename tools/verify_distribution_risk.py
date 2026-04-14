@@ -64,7 +64,14 @@ def require_distribution_withdrawal_error_locale_keys(path: Path, locale_name: s
         )
 
 
-def require_interface_field_keys(path: Path, interface_name: str, field_keys: list[str], title_prefix: str) -> None:
+def require_interface_field_keys(
+    path: Path,
+    interface_name: str,
+    field_keys: list[str],
+    title_prefix: str,
+    *,
+    optional: bool,
+) -> None:
     content = path.read_text(encoding="utf-8")
     match = re.search(
         rf"export\s+interface\s+{re.escape(interface_name)}\s*\{{(?P<body>[\s\S]*?)\n\}}",
@@ -77,10 +84,16 @@ def require_interface_field_keys(path: Path, interface_name: str, field_keys: li
         )
 
     body = match.group("body")
-    missing = [field for field in field_keys if re.search(rf"\b{re.escape(field)}\s*\?:\s*number\b", body) is None]
+    separator = r"\?" if optional else ""
+    missing = [
+        field
+        for field in field_keys
+        if re.search(rf"\b{re.escape(field)}\s*{separator}:\s*number\b", body) is None
+    ]
     if missing:
+        maybe_kind = "optional" if optional else "required"
         raise AssertionError(
-            f"{title_prefix}: missing fields {missing} in interface {interface_name} of {path.relative_to(ROOT)}"
+            f"{title_prefix}: missing {maybe_kind} number fields {missing} in interface {interface_name} of {path.relative_to(ROOT)}"
         )
 
 
@@ -276,12 +289,14 @@ def static_verify() -> list[str]:
         "SystemSettings",
         risk_control_fields,
         "P3 frontend settings response type",
+        optional=False,
     )
     require_interface_field_keys(
         admin_settings_api,
         "UpdateSettingsRequest",
         risk_control_fields,
         "P3 frontend settings update-request type",
+        optional=True,
     )
     checks.append("DTO/handler/frontend admin settings API remain aligned for all 4 risk control fields (scoped checks in SystemSettings + UpdateSettingsRequest)")
 
