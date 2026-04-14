@@ -285,6 +285,8 @@ def static_verify() -> list[str]:
             ("response: { data: { code: 'distribution_withdrawal_cooldown' } }", "P1 locale-message spec covers response.data.code payload shape for cooldown"),
             ("data: { code: 'distribution_withdrawal_cooldown' }", "P1 locale-message spec covers top-level data.code payload shape for cooldown"),
             ("response: { data: { code: 'distribution_withdrawal_daily_limit_count' } }", "P1 locale-message spec covers response.data.code payload shape for daily-count"),
+            ("data: { code: 'distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level data.code payload shape for daily-count"),
+            ("response: { data: { code: 'distribution_withdrawal_daily_limit_amount' } }", "P1 locale-message spec covers response.data.code payload shape for daily-amount"),
             ("data: { code: 'distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.code payload shape for daily-amount"),
             ("response: { data: { error: { message: 'request blocked: distribution_withdrawal_cooldown' } } }", "P1 locale-message spec covers response.data.error.message payload shape for cooldown token"),
             ("data: { error: { message: 'request blocked: distribution_withdrawal_cooldown' } }", "P1 locale-message spec covers top-level data.error.message payload shape for cooldown token"),
