@@ -162,6 +162,15 @@ def static_verify() -> list[str]:
             ("require.Equal(t, 6, resp.Data.CooldownDays)", "P0 handler mixed raw keeps valid cooldown"),
             ("require.Equal(t, 0, resp.Data.DailyLimitCount)", "P0 handler mixed raw clamps negative daily count"),
             ("require.Equal(t, 2500.5, resp.Data.DailyLimitAmt)", "P0 handler mixed raw keeps valid daily amount"),
+            ("body := []byte(`{}`)", "P3 handler omitted-fields regression uses empty payload to validate keep-previous semantics"),
+            ("require.Equal(t, \"66.60000000\", repo.settings[service.SettingKeyDistributionWithdrawalRiskThreshold])", "P3 handler omitted-fields keeps previous persisted risk threshold"),
+            ("require.Equal(t, \"2\", repo.settings[service.SettingKeyDistributionWithdrawalCooldownDays])", "P3 handler omitted-fields keeps previous persisted cooldown days"),
+            ("require.Equal(t, \"3\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitCount])", "P3 handler omitted-fields keeps previous persisted daily count"),
+            ("require.Equal(t, \"123.45000000\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitAmount])", "P3 handler omitted-fields keeps previous persisted daily amount"),
+            ("require.Equal(t, 66.6, resp.Data.RiskThreshold)", "P3 handler omitted-fields response keeps previous risk threshold"),
+            ("require.Equal(t, 2, resp.Data.CooldownDays)", "P3 handler omitted-fields response keeps previous cooldown days"),
+            ("require.Equal(t, 3, resp.Data.DailyLimitCount)", "P3 handler omitted-fields response keeps previous daily count"),
+            ("require.Equal(t, 123.45, resp.Data.DailyLimitAmt)", "P3 handler omitted-fields response keeps previous daily amount"),
         ],
     )
     require_all(
