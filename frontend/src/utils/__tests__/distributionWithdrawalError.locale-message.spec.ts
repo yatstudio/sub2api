@@ -33,6 +33,9 @@ describe('distributionWithdrawalError locale message alignment', () => {
     expect(resolveDistributionWithdrawalErrorMessage({
       data: { error: { message: 'request blocked: distribution_withdrawal_daily_limit_count' } }
     }, t)).toBe('今日提现次数已达上限')
+    expect(resolveDistributionWithdrawalErrorMessage({
+      data: { error: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' } }
+    }, t)).toBe('今日提现金额已达上限')
   })
 
   it('returns readable en messages for cooldown/daily count/daily amount limits', () => {
@@ -54,6 +57,9 @@ describe('distributionWithdrawalError locale message alignment', () => {
     expect(resolveDistributionWithdrawalErrorMessage({
       response: { data: { error: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' } } }
     }, t)).toBe('Daily withdrawal amount limit reached.')
+    expect(resolveDistributionWithdrawalErrorMessage({
+      data: { error: { message: 'request blocked: distribution_withdrawal_daily_limit_count' } }
+    }, t)).toBe('Daily withdrawal request count limit reached.')
     expect(resolveDistributionWithdrawalErrorMessage({
       data: { error: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' } }
     }, t)).toBe('Daily withdrawal amount limit reached.')
