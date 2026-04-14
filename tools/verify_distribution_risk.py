@@ -246,6 +246,7 @@ def static_verify() -> list[str]:
         [
             ("top-level data.code payload shape", "P1 reason extractor spec covers top-level data.code payload shape"),
             ("data: { message: 'raw backend msg from data' }", "P1 message fallback spec covers top-level data.message payload shape"),
+            ("data: { message: 'request rejected: distribution_withdrawal_daily_limit_amount' }", "P1 reason extractor spec covers top-level data.message token fallback for daily amount"),
         ],
     )
     require_all(
@@ -256,6 +257,8 @@ def static_verify() -> list[str]:
             ("distribution_withdrawal_daily_limit_count", "P1 locale-message spec covers message-token fallback for daily-count"),
             ("distribution_withdrawal_daily_limit_amount", "P1 locale-message spec covers message-token fallback for daily-amount"),
             ("data: { error: { message:", "P1 locale-message spec covers top-level data.error.message payload shape"),
+            ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level data.message payload shape for daily-count token"),
+            ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.message payload shape for daily-amount token"),
         ],
     )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
