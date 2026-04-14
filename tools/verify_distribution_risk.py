@@ -281,6 +281,8 @@ def static_verify() -> list[str]:
             ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT", "P1 locale-message spec covers daily-amount alias reason code"),
             ("distribution_withdrawal_daily_limit_count", "P1 locale-message spec covers message-token fallback for daily-count"),
             ("distribution_withdrawal_daily_limit_amount", "P1 locale-message spec covers message-token fallback for daily-amount"),
+            ("response: { data: { code: 'distribution_withdrawal_daily_limit_count' } }", "P1 locale-message spec covers response.data.code payload shape for daily-count"),
+            ("data: { code: 'distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.code payload shape for daily-amount"),
             ("data: { error: { message:", "P1 locale-message spec covers top-level data.error.message payload shape"),
             ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level data.message payload shape for daily-count token"),
             ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.message payload shape for daily-amount token"),
