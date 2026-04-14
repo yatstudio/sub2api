@@ -64,6 +64,26 @@ def require_distribution_withdrawal_error_locale_keys(path: Path, locale_name: s
         )
 
 
+def require_interface_field_keys(path: Path, interface_name: str, field_keys: list[str], title_prefix: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    match = re.search(
+        rf"export\s+interface\s+{re.escape(interface_name)}\s*\{{(?P<body>[\s\S]*?)\n\}}",
+        content,
+        re.MULTILINE,
+    )
+    if not match:
+        raise AssertionError(
+            f"{title_prefix}: missing `export interface {interface_name}` block in {path.relative_to(ROOT)}"
+        )
+
+    body = match.group("body")
+    missing = [field for field in field_keys if re.search(rf"\b{re.escape(field)}\s*\?:\s*number\b", body) is None]
+    if missing:
+        raise AssertionError(
+            f"{title_prefix}: missing fields {missing} in interface {interface_name} of {path.relative_to(ROOT)}"
+        )
+
+
 def is_frontend_environment_failure(output: str) -> bool:
     lower = output.lower()
     env_markers = [
@@ -245,16 +265,25 @@ def static_verify() -> list[str]:
             ("return previousSettings.DistributionWithdrawalDailyLimitAmount", "P3 handler omitted daily amount falls back to previous setting"),
         ],
     )
-    require_all(
+    risk_control_fields = [
+        "distribution_withdrawal_risk_threshold",
+        "distribution_withdrawal_cooldown_days",
+        "distribution_withdrawal_daily_limit_count",
+        "distribution_withdrawal_daily_limit_amount",
+    ]
+    require_interface_field_keys(
         admin_settings_api,
-        [
-            ("distribution_withdrawal_risk_threshold?: number", "P3 frontend settings type contains risk threshold"),
-            ("distribution_withdrawal_cooldown_days?: number", "P3 frontend settings type contains cooldown days"),
-            ("distribution_withdrawal_daily_limit_count?: number", "P3 frontend settings type contains daily count"),
-            ("distribution_withdrawal_daily_limit_amount?: number", "P3 frontend settings type contains daily amount"),
-        ],
+        "SystemSettings",
+        risk_control_fields,
+        "P3 frontend settings response type",
     )
-    checks.append("DTO/handler/frontend admin settings API remain aligned for all 4 risk control fields")
+    require_interface_field_keys(
+        admin_settings_api,
+        "UpdateSettingsRequest",
+        risk_control_fields,
+        "P3 frontend settings update-request type",
+    )
+    checks.append("DTO/handler/frontend admin settings API remain aligned for all 4 risk control fields (scoped checks in SystemSettings + UpdateSettingsRequest)")
 
     # P1: backend->frontend reason mapping and i18n message keys
     require_all(
