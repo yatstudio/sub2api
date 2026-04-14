@@ -327,6 +327,8 @@ def static_verify() -> list[str]:
             ("code: 'distribution_withdrawal_daily_limit'", "P1 reason extractor spec covers canonical daily-count code in code envelopes"),
             ("data: { message: 'raw backend msg from data' }", "P1 message fallback spec covers top-level data.message payload shape"),
             ("data: { message: 'request rejected: distribution_withdrawal_daily_limit_amount' }", "P1 reason extractor spec covers top-level data.message token fallback for daily amount"),
+            ("message: 'request rejected: distribution_withdrawal_cooldown'", "P1 reason extractor spec covers top-level message token fallback for cooldown"),
+            ("message: 'request rejected: distribution_withdrawal_daily_limit_count'", "P1 reason extractor spec covers top-level message token fallback for daily-count"),
         ],
     )
     require_all(

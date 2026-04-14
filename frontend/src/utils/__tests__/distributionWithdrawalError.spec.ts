@@ -92,6 +92,14 @@ describe('distributionWithdrawalError', () => {
     })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
 
     expect(extractDistributionWithdrawalReason({
+      message: 'request rejected: distribution_withdrawal_cooldown'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
+
+    expect(extractDistributionWithdrawalReason({
+      message: 'request rejected: distribution_withdrawal_daily_limit_count'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
       message: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT: cap reached'
     })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
