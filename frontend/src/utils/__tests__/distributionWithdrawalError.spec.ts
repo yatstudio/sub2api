@@ -31,6 +31,16 @@ describe('distributionWithdrawalError', () => {
     })
 
     expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+
+    const canonicalCountReason = extractDistributionWithdrawalReason({
+      response: {
+        data: {
+          code: 'distribution_withdrawal_daily_limit'
+        }
+      }
+    })
+
+    expect(canonicalCountReason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
   })
 
   it('extracts reason from top-level data.code payload shape', () => {
@@ -41,6 +51,14 @@ describe('distributionWithdrawalError', () => {
     })
 
     expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    const canonicalCountReason = extractDistributionWithdrawalReason({
+      data: {
+        code: 'distribution_withdrawal_daily_limit'
+      }
+    })
+
+    expect(canonicalCountReason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
   })
 
   it('extracts reason from top-level code payload shape', () => {
@@ -49,6 +67,12 @@ describe('distributionWithdrawalError', () => {
     })
 
     expect(reason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+
+    const canonicalCountReason = extractDistributionWithdrawalReason({
+      code: 'distribution_withdrawal_daily_limit'
+    })
+
+    expect(canonicalCountReason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
   })
 
   it('extracts reason when backend returns plain string error code', () => {
