@@ -132,6 +132,32 @@ def static_verify() -> list[str]:
             ("require.Equal(t, 10000.0, settings.DistributionWithdrawalDailyLimitAmount)", "P0 service invalid raw fallback default daily amount"),
         ],
     )
+    require_all(
+        setting_handler_test,
+        [
+            ("require.Equal(t, float64(0), resp.Data.RiskThreshold)", "P0 handler clamp assertion threshold"),
+            ("require.Equal(t, 0, resp.Data.CooldownDays)", "P0 handler clamp assertion cooldown days"),
+            ("require.Equal(t, 0, resp.Data.DailyLimitCount)", "P0 handler clamp assertion daily count"),
+            ("require.Equal(t, float64(0), resp.Data.DailyLimitAmt)", "P0 handler clamp assertion daily amount"),
+            ("require.Equal(t, \"0.00000000\", repo.settings[service.SettingKeyDistributionWithdrawalRiskThreshold])", "P0 handler write clamp persisted threshold"),
+            ("require.Equal(t, \"0\", repo.settings[service.SettingKeyDistributionWithdrawalCooldownDays])", "P0 handler write clamp persisted cooldown days"),
+            ("require.Equal(t, \"0\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitCount])", "P0 handler write clamp persisted daily count"),
+            ("require.Equal(t, \"0.00000000\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitAmount])", "P0 handler write clamp persisted daily amount"),
+        ],
+    )
+    require_all(
+        setting_service_test,
+        [
+            ("require.Equal(t, \"0.00000000\", repo.updates[SettingKeyDistributionWithdrawalRiskThreshold])", "P0 service write clamp persisted threshold"),
+            ("require.Equal(t, \"0\", repo.updates[SettingKeyDistributionWithdrawalCooldownDays])", "P0 service write clamp persisted cooldown days"),
+            ("require.Equal(t, \"0\", repo.updates[SettingKeyDistributionWithdrawalDailyLimitCount])", "P0 service write clamp persisted daily count"),
+            ("require.Equal(t, \"0.00000000\", repo.updates[SettingKeyDistributionWithdrawalDailyLimitAmount])", "P0 service write clamp persisted daily amount"),
+            ("require.Equal(t, float64(0), settings.DistributionWithdrawalRiskThreshold)", "P0 service read clamp threshold"),
+            ("require.Equal(t, 0, settings.DistributionWithdrawalCooldownDays)", "P0 service read clamp cooldown days"),
+            ("require.Equal(t, 0, settings.DistributionWithdrawalDailyLimitCount)", "P0 service read clamp daily count"),
+            ("require.Equal(t, float64(0), settings.DistributionWithdrawalDailyLimitAmount)", "P0 service read clamp daily amount"),
+        ],
+    )
     checks.append("backend tests cover handler/service read+write for all 4 risk controls (including negative clamp + invalid-raw fallback defaults)")
 
     require_all(
