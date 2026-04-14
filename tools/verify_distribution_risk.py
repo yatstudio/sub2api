@@ -100,6 +100,7 @@ def static_verify() -> list[str]:
             ("TestSettingHandler_GetSettings_IncludesDistributionWithdrawalRiskControls", "P0 handler read persisted regression"),
             ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler read clamp regression"),
             ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults", "P0 handler read invalid raw values fallback regression"),
+            ("TestSettingHandler_GetSettings_DistributionWithdrawalRiskControls_MixedRawValues_PerFieldFallbackAndClamp", "P0 handler read mixed raw per-field fallback + clamp regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_Persisted", "P0 handler write persisted regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler write clamp regression"),
             ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_IncludeAllFourFields", "P0 handler audit changed-keys include all four controls"),
@@ -114,6 +115,7 @@ def static_verify() -> list[str]:
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ReadPersisted", "P0 service read persisted regression"),
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 service read clamp regression"),
             ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_InvalidRawValuesFallbackToDefaults", "P0 service read invalid raw values fallback regression"),
+            ("TestSettingService_GetAllSettings_DistributionWithdrawalRiskControls_MixedRawValues_PerFieldFallbackAndClamp", "P0 service read mixed raw per-field fallback + clamp regression"),
         ],
     )
     require_all(
