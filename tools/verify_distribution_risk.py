@@ -90,6 +90,7 @@ def static_verify() -> list[str]:
     settings_dto = ROOT / "backend/internal/handler/dto/settings.go"
     admin_settings_api = ROOT / "frontend/src/api/admin/settings.ts"
     withdrawal_util = ROOT / "frontend/src/utils/distributionWithdrawalError.ts"
+    distribution_view = ROOT / "frontend/src/views/user/DistributionView.vue"
     withdrawal_error_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.spec.ts"
     withdrawal_locale_message_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts"
     zh_locale = ROOT / "frontend/src/i18n/locales/zh.ts"
@@ -259,7 +260,15 @@ def static_verify() -> list[str]:
     )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
     require_distribution_withdrawal_error_locale_keys(en_locale, "en")
-    checks.append("frontend mapping + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
+    require_all(
+        distribution_view,
+        [
+            ("import { resolveDistributionWithdrawalErrorMessage } from '@/utils/distributionWithdrawalError'", "P1 DistributionView imports withdrawal error resolver"),
+            ("const withdrawalErrorMessage = (error: unknown) => resolveDistributionWithdrawalErrorMessage(error, t)", "P1 DistributionView derives readable withdrawal error message via resolver"),
+            ("appStore.showError(withdrawalErrorMessage(error))", "P1 DistributionView shows resolver-generated readable withdrawal error message"),
+        ],
+    )
+    checks.append("frontend mapping + DistributionView wiring + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
 
     return checks
 
