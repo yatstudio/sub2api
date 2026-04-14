@@ -87,6 +87,7 @@ def static_verify() -> list[str]:
     setting_service_test = ROOT / "backend/internal/service/setting_service_update_test.go"
     setting_handler = ROOT / "backend/internal/handler/admin/setting_handler.go"
     setting_service = ROOT / "backend/internal/service/setting_service.go"
+    user_distribution_service = ROOT / "backend/internal/service/user_distribution.go"
     settings_dto = ROOT / "backend/internal/handler/dto/settings.go"
     admin_settings_api = ROOT / "frontend/src/api/admin/settings.ts"
     withdrawal_util = ROOT / "frontend/src/utils/distributionWithdrawalError.ts"
@@ -246,7 +247,15 @@ def static_verify() -> list[str]:
     )
     checks.append("DTO/handler/frontend admin settings API remain aligned for all 4 risk control fields")
 
-    # P1: frontend reason mapping and i18n message keys
+    # P1: backend->frontend reason mapping and i18n message keys
+    require_all(
+        user_distribution_service,
+        [
+            ('"DISTRIBUTION_WITHDRAWAL_COOLDOWN"', "P1 backend exports cooldown reason code"),
+            ('"DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT"', "P1 backend exports daily-count reason code"),
+            ('"DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT"', "P1 backend exports daily-amount reason code"),
+        ],
+    )
     require_all(
         withdrawal_util,
         [
@@ -287,7 +296,7 @@ def static_verify() -> list[str]:
             ("appStore.showError(withdrawalErrorMessage(error))", "P1 DistributionView shows resolver-generated readable withdrawal error message"),
         ],
     )
-    checks.append("frontend mapping + DistributionView wiring + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
+    checks.append("backend reason codes + frontend mapping + DistributionView wiring + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
 
     return checks
 
