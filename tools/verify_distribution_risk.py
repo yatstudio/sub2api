@@ -362,6 +362,9 @@ def static_verify() -> list[str]:
             ("response: { data: { error: 'distribution_withdrawal_daily_limit_amount' } }", "P1 locale-message spec covers response.data.error string payload for daily-amount"),
             ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level data.message payload shape for daily-count token"),
             ("data: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.message payload shape for daily-amount token"),
+            ("message: 'request blocked: distribution_withdrawal_cooldown'", "P1 locale-message spec covers top-level message payload shape for cooldown token"),
+            ("message: 'request blocked: distribution_withdrawal_daily_limit_count'", "P1 locale-message spec covers top-level message payload shape for daily-count token"),
+            ("message: 'request blocked: distribution_withdrawal_daily_limit_amount'", "P1 locale-message spec covers top-level message payload shape for daily-amount token"),
         ],
     )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
