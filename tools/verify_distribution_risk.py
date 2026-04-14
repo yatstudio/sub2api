@@ -87,6 +87,8 @@ def static_verify() -> list[str]:
     setting_service_test = ROOT / "backend/internal/service/setting_service_update_test.go"
     setting_handler = ROOT / "backend/internal/handler/admin/setting_handler.go"
     setting_service = ROOT / "backend/internal/service/setting_service.go"
+    settings_dto = ROOT / "backend/internal/handler/dto/settings.go"
+    admin_settings_api = ROOT / "frontend/src/api/admin/settings.ts"
     withdrawal_util = ROOT / "frontend/src/utils/distributionWithdrawalError.ts"
     withdrawal_error_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.spec.ts"
     withdrawal_locale_message_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts"
@@ -187,6 +189,40 @@ def static_verify() -> list[str]:
         ],
     )
     checks.append("backend implementation contains all 4 risk fields + clamp logic in handler/service")
+
+    # P3: DTO/API schema consistency for the same 4 risk control fields
+    require_all(
+        settings_dto,
+        [
+            ("DistributionWithdrawalRiskThreshold", "P3 DTO response contains risk threshold field"),
+            ("DistributionWithdrawalCooldownDays", "P3 DTO response contains cooldown days field"),
+            ("DistributionWithdrawalDailyLimitCount", "P3 DTO response contains daily count field"),
+            ("DistributionWithdrawalDailyLimitAmount", "P3 DTO response contains daily amount field"),
+            ('json:"distribution_withdrawal_risk_threshold"', "P3 DTO json tag for risk threshold"),
+            ('json:"distribution_withdrawal_cooldown_days"', "P3 DTO json tag for cooldown days"),
+            ('json:"distribution_withdrawal_daily_limit_count"', "P3 DTO json tag for daily count"),
+            ('json:"distribution_withdrawal_daily_limit_amount"', "P3 DTO json tag for daily amount"),
+        ],
+    )
+    require_all(
+        setting_handler,
+        [
+            ("DistributionWithdrawalRiskThreshold   *float64", "P3 handler update request uses pointer for risk threshold"),
+            ("DistributionWithdrawalCooldownDays    *int", "P3 handler update request uses pointer for cooldown days"),
+            ("DistributionWithdrawalDailyLimitCount *int", "P3 handler update request uses pointer for daily count"),
+            ("DistributionWithdrawalDailyLimitAmount *float64", "P3 handler update request uses pointer for daily amount"),
+        ],
+    )
+    require_all(
+        admin_settings_api,
+        [
+            ("distribution_withdrawal_risk_threshold?: number", "P3 frontend settings type contains risk threshold"),
+            ("distribution_withdrawal_cooldown_days?: number", "P3 frontend settings type contains cooldown days"),
+            ("distribution_withdrawal_daily_limit_count?: number", "P3 frontend settings type contains daily count"),
+            ("distribution_withdrawal_daily_limit_amount?: number", "P3 frontend settings type contains daily amount"),
+        ],
+    )
+    checks.append("DTO/handler/frontend admin settings API remain aligned for all 4 risk control fields")
 
     # P1: frontend reason mapping and i18n message keys
     require_all(
