@@ -88,6 +88,7 @@ def static_verify() -> list[str]:
     setting_handler = ROOT / "backend/internal/handler/admin/setting_handler.go"
     setting_service = ROOT / "backend/internal/service/setting_service.go"
     withdrawal_util = ROOT / "frontend/src/utils/distributionWithdrawalError.ts"
+    withdrawal_locale_message_spec = ROOT / "frontend/src/utils/__tests__/distributionWithdrawalError.locale-message.spec.ts"
     zh_locale = ROOT / "frontend/src/i18n/locales/zh.ts"
     en_locale = ROOT / "frontend/src/i18n/locales/en.ts"
 
@@ -195,9 +196,18 @@ def static_verify() -> list[str]:
             ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT", "P1 daily amount alias mapping"),
         ],
     )
+    require_all(
+        withdrawal_locale_message_spec,
+        [
+            ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT", "P1 locale-message spec covers daily-count alias reason code"),
+            ("DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT", "P1 locale-message spec covers daily-amount alias reason code"),
+            ("distribution_withdrawal_daily_limit_count", "P1 locale-message spec covers message-token fallback for daily-count"),
+            ("distribution_withdrawal_daily_limit_amount", "P1 locale-message spec covers message-token fallback for daily-amount"),
+        ],
+    )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
     require_distribution_withdrawal_error_locale_keys(en_locale, "en")
-    checks.append("frontend mapping + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
+    checks.append("frontend mapping + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
 
     return checks
 
