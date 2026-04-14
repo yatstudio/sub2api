@@ -112,6 +112,12 @@ deploy/config.yaml
 backend/.installed
 
 # ===================
+# Python 工具缓存
+# ===================
+__pycache__/
+*.py[cod]
+
+# ===================
 # 其他
 # ===================
 tests
