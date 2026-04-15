@@ -75,6 +75,28 @@ describe('distributionWithdrawalError', () => {
     expect(canonicalCountReason).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
   })
 
+  it('extracts reason from top-level reason payload shape', () => {
+    expect(extractDistributionWithdrawalReason({
+      reason: 'distribution_withdrawal_cooldown'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
+
+    expect(extractDistributionWithdrawalReason({
+      reason: 'distribution_withdrawal_daily_limit'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      reason: 'distribution_withdrawal_daily_limit_count'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      reason: 'distribution_withdrawal_daily_limit_amount'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      reason: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+  })
+
   it('extracts reason from top-level error object reason/code payload shape', () => {
     expect(extractDistributionWithdrawalReason({
       error: { reason: 'distribution_withdrawal_cooldown' }
