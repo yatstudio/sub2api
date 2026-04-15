@@ -81,6 +81,14 @@ describe('distributionWithdrawalError', () => {
     })).toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
 
     expect(extractDistributionWithdrawalReason({
+      error: { reason: 'distribution_withdrawal_daily_limit' }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      error: { reason: 'distribution_withdrawal_daily_limit_amount' }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
       error: { code: 'distribution_withdrawal_daily_limit_amount' }
     })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
 

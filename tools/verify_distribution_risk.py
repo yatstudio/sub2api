@@ -325,6 +325,8 @@ def static_verify() -> list[str]:
             ("response.data.code payload shape", "P1 reason extractor spec covers response.data.code payload shape"),
             ("top-level data.code payload shape", "P1 reason extractor spec covers top-level data.code payload shape"),
             ("top-level error object reason/code payload shape", "P1 reason extractor spec covers top-level error.reason/error.code payload shape"),
+            ("error: { reason: 'distribution_withdrawal_daily_limit' }", "P1 reason extractor spec covers top-level error.reason canonical daily-count envelope"),
+            ("error: { reason: 'distribution_withdrawal_daily_limit_amount' }", "P1 reason extractor spec covers top-level error.reason daily-amount envelope"),
             ("error: { code: 'distribution_withdrawal_daily_limit' }", "P1 reason extractor spec covers top-level error.code canonical daily-count envelope"),
             ("code: 'distribution_withdrawal_daily_limit'", "P1 reason extractor spec covers canonical daily-count code in code envelopes"),
             ("data: { message: 'raw backend msg from data' }", "P1 message fallback spec covers top-level data.message payload shape"),
