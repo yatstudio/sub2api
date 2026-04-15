@@ -11,12 +11,16 @@ const readPath = (input: any, path: string[]): unknown => {
   return current
 }
 
+const DISTRIBUTION_WITHDRAWAL_COOLDOWN = 'DISTRIBUTION_WITHDRAWAL_COOLDOWN'
+const DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT = 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT'
+const DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT = 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+
 const DISTRIBUTION_WITHDRAWAL_REASON_MAP: Record<string, string> = {
-  DISTRIBUTION_WITHDRAWAL_COOLDOWN: 'DISTRIBUTION_WITHDRAWAL_COOLDOWN',
-  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT',
-  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT',
-  DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT',
-  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+  [DISTRIBUTION_WITHDRAWAL_COOLDOWN]: DISTRIBUTION_WITHDRAWAL_COOLDOWN,
+  [DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT]: DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT,
+  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT: DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT,
+  [DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT]: DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT,
+  DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT: DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT
 }
 
 const tryResolveKnownDistributionReason = (value: unknown): string => {
@@ -31,13 +35,13 @@ const tryResolveKnownDistributionReason = (value: unknown): string => {
 
   const lower = trimmed.toLowerCase()
   if (lower.includes('distribution_withdrawal_daily_amount_limit') || lower.includes('distribution_withdrawal_daily_limit_amount')) {
-    return 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
+    return DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT
   }
   if (lower.includes('distribution_withdrawal_daily_limit_count') || lower.includes('distribution_withdrawal_daily_limit')) {
-    return 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT'
+    return DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT
   }
   if (lower.includes('distribution_withdrawal_cooldown')) {
-    return 'DISTRIBUTION_WITHDRAWAL_COOLDOWN'
+    return DISTRIBUTION_WITHDRAWAL_COOLDOWN
   }
 
   return ''
@@ -110,14 +114,11 @@ export const resolveDistributionWithdrawalErrorMessage = (
 ): string => {
   const reason = extractDistributionWithdrawalReason(error)
 
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_COOLDOWN') return t('distribution.withdrawalErrors.cooldown')
-  if (reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT' || reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_COUNT') {
+  if (reason === DISTRIBUTION_WITHDRAWAL_COOLDOWN) return t('distribution.withdrawalErrors.cooldown')
+  if (reason === DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT) {
     return t('distribution.withdrawalErrors.dailyLimitCount')
   }
-  if (
-    reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT'
-    || reason === 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT_AMOUNT'
-  ) {
+  if (reason === DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT) {
     return t('distribution.withdrawalErrors.dailyLimitAmount')
   }
 
