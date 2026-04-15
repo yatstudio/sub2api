@@ -32,6 +32,12 @@ describe('distributionWithdrawalError locale message alignment', () => {
       .toBe('今日提现次数已达上限')
     expect(resolveDistributionWithdrawalErrorMessage({ code: 'distribution_withdrawal_daily_limit_amount' }, t))
       .toBe('今日提现金额已达上限')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_COOLDOWN' }, t))
+      .toBe('当前处于提现冷却期，请稍后再试')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT' }, t))
+      .toBe('今日提现次数已达上限')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT' }, t))
+      .toBe('今日提现金额已达上限')
     expect(resolveDistributionWithdrawalErrorMessage({
       response: { data: { code: 'distribution_withdrawal_cooldown' } }
     }, t)).toBe('当前处于提现冷却期，请稍后再试')
@@ -196,6 +202,12 @@ describe('distributionWithdrawalError locale message alignment', () => {
     expect(resolveDistributionWithdrawalErrorMessage({ code: 'distribution_withdrawal_daily_limit_count' }, t))
       .toBe('Daily withdrawal request count limit reached.')
     expect(resolveDistributionWithdrawalErrorMessage({ code: 'distribution_withdrawal_daily_limit_amount' }, t))
+      .toBe('Daily withdrawal amount limit reached.')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_COOLDOWN' }, t))
+      .toBe('You are still in the withdrawal cooldown period. Please try again later.')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT' }, t))
+      .toBe('Daily withdrawal request count limit reached.')
+    expect(resolveDistributionWithdrawalErrorMessage({ code: 'DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT' }, t))
       .toBe('Daily withdrawal amount limit reached.')
     expect(resolveDistributionWithdrawalErrorMessage({
       response: { data: { code: 'distribution_withdrawal_cooldown' } }
