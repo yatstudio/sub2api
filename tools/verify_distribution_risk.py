@@ -142,6 +142,7 @@ def static_verify() -> list[str]:
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative", "P0 handler write clamp regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_ClampNegative_PerField", "P0 handler write per-field clamp regression"),
             ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_OmittedFieldsKeepPrevious", "P3 handler partial-update semantics keep previous values when omitted"),
+            ("TestSettingHandler_UpdateSettings_DistributionWithdrawalRiskControls_PartialPayload_ClampAndKeepPrevious", "P0/P3 handler partial payload regression: clamp provided negatives while keeping omitted fields"),
             ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_IncludeAllFourFields", "P0 handler audit changed-keys include all four controls"),
             ("TestGetChangedSettingKeys_DistributionWithdrawalRiskControls_UnchangedNotIncluded", "P0 handler audit changed-keys ignore unchanged controls"),
         ],
@@ -204,6 +205,14 @@ def static_verify() -> list[str]:
             ("require.Equal(t, 2, resp.Data.CooldownDays)", "P3 handler omitted-fields response keeps previous cooldown days"),
             ("require.Equal(t, 3, resp.Data.DailyLimitCount)", "P3 handler omitted-fields response keeps previous daily count"),
             ("require.Equal(t, 123.45, resp.Data.DailyLimitAmt)", "P3 handler omitted-fields response keeps previous daily amount"),
+            ("\"distribution_withdrawal_risk_threshold\":  -1", "P0/P3 handler partial payload regression includes negative provided risk threshold"),
+            ("\"distribution_withdrawal_daily_limit_amount\": 2500.5", "P0/P3 handler partial payload regression includes provided daily amount"),
+            ("require.Equal(t, \"0.00000000\", repo.settings[service.SettingKeyDistributionWithdrawalRiskThreshold])", "P0/P3 handler partial payload clamps provided negative threshold"),
+            ("require.Equal(t, \"2\", repo.settings[service.SettingKeyDistributionWithdrawalCooldownDays])", "P0/P3 handler partial payload keeps omitted cooldown"),
+            ("require.Equal(t, \"3\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitCount])", "P0/P3 handler partial payload keeps omitted daily count"),
+            ("require.Equal(t, \"2500.50000000\", repo.settings[service.SettingKeyDistributionWithdrawalDailyLimitAmount])", "P0/P3 handler partial payload persists provided daily amount"),
+            ("require.Equal(t, float64(0), resp.Data.RiskThreshold)", "P0/P3 handler partial payload response clamps provided negative threshold"),
+            ("require.Equal(t, 2500.5, resp.Data.DailyLimitAmt)", "P0/P3 handler partial payload response keeps provided daily amount"),
         ],
     )
     require_all(
