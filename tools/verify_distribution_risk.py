@@ -433,6 +433,22 @@ def static_verify() -> list[str]:
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
     require_distribution_withdrawal_error_locale_keys(en_locale, "en")
     require_all(
+        zh_locale,
+        [
+            ("cooldown: '当前处于提现冷却期，请稍后再试'", "P1 zh readable cooldown error message"),
+            ("dailyLimitCount: '今日提现次数已达上限'", "P1 zh readable daily-count-limit error message"),
+            ("dailyLimitAmount: '今日提现金额已达上限'", "P1 zh readable daily-amount-limit error message"),
+        ],
+    )
+    require_all(
+        en_locale,
+        [
+            ("cooldown: 'You are still in the withdrawal cooldown period. Please try again later.'", "P1 en readable cooldown error message"),
+            ("dailyLimitCount: 'Daily withdrawal request count limit reached.'", "P1 en readable daily-count-limit error message"),
+            ("dailyLimitAmount: 'Daily withdrawal amount limit reached.'", "P1 en readable daily-amount-limit error message"),
+        ],
+    )
+    require_all(
         distribution_view,
         [
             ("import { resolveDistributionWithdrawalErrorMessage } from '@/utils/distributionWithdrawalError'", "P1 DistributionView imports withdrawal error resolver"),
@@ -441,6 +457,7 @@ def static_verify() -> list[str]:
         ],
     )
     checks.append("backend reason codes + frontend mapping + DistributionView wiring + locale-message regressions + zh/en distribution.withdrawalErrors keys exist for cooldown/count/amount limits")
+    checks.append("zh/en withdrawal risk messages are explicit human-readable copy for cooldown/daily count/daily amount limits")
 
     return checks
 
