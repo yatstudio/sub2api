@@ -324,11 +324,15 @@ def static_verify() -> list[str]:
         [
             ("response.data.code payload shape", "P1 reason extractor spec covers response.data.code payload shape"),
             ("top-level data.code payload shape", "P1 reason extractor spec covers top-level data.code payload shape"),
+            ("top-level error object reason/code payload shape", "P1 reason extractor spec covers top-level error.reason/error.code payload shape"),
+            ("error: { code: 'distribution_withdrawal_daily_limit' }", "P1 reason extractor spec covers top-level error.code canonical daily-count envelope"),
             ("code: 'distribution_withdrawal_daily_limit'", "P1 reason extractor spec covers canonical daily-count code in code envelopes"),
             ("data: { message: 'raw backend msg from data' }", "P1 message fallback spec covers top-level data.message payload shape"),
             ("data: { message: 'request rejected: distribution_withdrawal_daily_limit_amount' }", "P1 reason extractor spec covers top-level data.message token fallback for daily amount"),
             ("message: 'request rejected: distribution_withdrawal_cooldown'", "P1 reason extractor spec covers top-level message token fallback for cooldown"),
             ("message: 'request rejected: distribution_withdrawal_daily_limit_count'", "P1 reason extractor spec covers top-level message token fallback for daily-count"),
+            ("error: { message: 'request rejected: distribution_withdrawal_daily_limit_count' }", "P1 reason extractor spec covers top-level error.message token fallback for daily-count"),
+            ("error: { message: 'request rejected: distribution_withdrawal_daily_limit_amount' }", "P1 reason extractor spec covers top-level error.message token fallback for daily-amount"),
         ],
     )
     require_all(
@@ -347,6 +351,8 @@ def static_verify() -> list[str]:
             ("data: { code: 'distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level data.code payload shape for daily-count"),
             ("response: { data: { code: 'distribution_withdrawal_daily_limit_amount' } }", "P1 locale-message spec covers response.data.code payload shape for daily-amount"),
             ("data: { code: 'distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level data.code payload shape for daily-amount"),
+            ("error: { code: 'distribution_withdrawal_daily_limit' }", "P1 locale-message spec covers top-level error.code payload shape for canonical daily-count code"),
+            ("error: { code: 'distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level error.code payload shape for daily-amount"),
             ("response: { data: { error: { message: 'request blocked: distribution_withdrawal_cooldown' } } }", "P1 locale-message spec covers response.data.error.message payload shape for cooldown token"),
             ("data: { error: { message: 'request blocked: distribution_withdrawal_cooldown' } }", "P1 locale-message spec covers top-level data.error.message payload shape for cooldown token"),
             ("data: { message: 'request blocked: distribution_withdrawal_cooldown' }", "P1 locale-message spec covers top-level data.message payload shape for cooldown token"),
@@ -367,6 +373,8 @@ def static_verify() -> list[str]:
             ("message: 'request blocked: distribution_withdrawal_cooldown'", "P1 locale-message spec covers top-level message payload shape for cooldown token"),
             ("message: 'request blocked: distribution_withdrawal_daily_limit_count'", "P1 locale-message spec covers top-level message payload shape for daily-count token"),
             ("message: 'request blocked: distribution_withdrawal_daily_limit_amount'", "P1 locale-message spec covers top-level message payload shape for daily-amount token"),
+            ("error: { message: 'request blocked: distribution_withdrawal_daily_limit_count' }", "P1 locale-message spec covers top-level error.message payload shape for daily-count token"),
+            ("error: { message: 'request blocked: distribution_withdrawal_daily_limit_amount' }", "P1 locale-message spec covers top-level error.message payload shape for daily-amount token"),
         ],
     )
     require_distribution_withdrawal_error_locale_keys(zh_locale, "zh")
