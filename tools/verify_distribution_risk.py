@@ -269,9 +269,13 @@ def static_verify() -> list[str]:
         setting_handler,
         [
             ("DistributionWithdrawalRiskThreshold   *float64", "P3 handler update request uses pointer for risk threshold"),
+            ('json:"distribution_withdrawal_risk_threshold"', "P3 handler update request json tag for risk threshold"),
             ("DistributionWithdrawalCooldownDays    *int", "P3 handler update request uses pointer for cooldown days"),
+            ('json:"distribution_withdrawal_cooldown_days"', "P3 handler update request json tag for cooldown days"),
             ("DistributionWithdrawalDailyLimitCount *int", "P3 handler update request uses pointer for daily count"),
+            ('json:"distribution_withdrawal_daily_limit_count"', "P3 handler update request json tag for daily count"),
             ("DistributionWithdrawalDailyLimitAmount *float64", "P3 handler update request uses pointer for daily amount"),
+            ('json:"distribution_withdrawal_daily_limit_amount"', "P3 handler update request json tag for daily amount"),
             ("return previousSettings.DistributionWithdrawalRiskThreshold", "P3 handler omitted risk threshold falls back to previous setting"),
             ("return previousSettings.DistributionWithdrawalCooldownDays", "P3 handler omitted cooldown days falls back to previous setting"),
             ("return previousSettings.DistributionWithdrawalDailyLimitCount", "P3 handler omitted daily count falls back to previous setting"),
