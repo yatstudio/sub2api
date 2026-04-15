@@ -99,6 +99,26 @@ describe('distributionWithdrawalError', () => {
     })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
   })
 
+  it('extracts reason from nested top-level error.error payload shape', () => {
+    expect(extractDistributionWithdrawalReason({
+      error: {
+        error: { reason: 'distribution_withdrawal_cooldown' }
+      }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
+
+    expect(extractDistributionWithdrawalReason({
+      error: {
+        error: { code: 'distribution_withdrawal_daily_limit' }
+      }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_LIMIT')
+
+    expect(extractDistributionWithdrawalReason({
+      error: {
+        error: { message: 'request rejected: distribution_withdrawal_daily_limit_amount' }
+      }
+    })).toBe('DISTRIBUTION_WITHDRAWAL_DAILY_AMOUNT_LIMIT')
+  })
+
   it('extracts reason when backend returns plain string error code', () => {
     expect(extractDistributionWithdrawalReason({ error: 'distribution_withdrawal_cooldown' }))
       .toBe('DISTRIBUTION_WITHDRAWAL_COOLDOWN')
