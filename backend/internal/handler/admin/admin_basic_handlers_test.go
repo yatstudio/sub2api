@@ -155,6 +155,13 @@ func TestGroupHandlerEndpoints(t *testing.T) {
 	router.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 
+	var statsResp map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &statsResp))
+	statsData, ok := statsResp["data"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, float64(1), statsData["total_api_keys"])
+	require.Equal(t, float64(1), statsData["active_api_keys"])
+
 	rec = httptest.NewRecorder()
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/admin/groups/2/api-keys", nil)
 	router.ServeHTTP(rec, req)
