@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 )
 
@@ -130,6 +131,50 @@ func (s *stubAdminService) DeleteUser(ctx context.Context, id int64) error {
 func (s *stubAdminService) UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*service.User, error) {
 	user := service.User{ID: userID, Balance: balance, Status: service.StatusActive}
 	return &user, nil
+}
+
+func (s *stubAdminService) GetUserDistributionProfile(ctx context.Context, userID int64) (*service.DistributionProfile, error) {
+	return &service.DistributionProfile{UserID: userID}, nil
+}
+
+func (s *stubAdminService) GetUserDistributionSummary(ctx context.Context, userID int64) (*service.DistributionSummary, error) {
+	return &service.DistributionSummary{UserID: userID}, nil
+}
+
+func (s *stubAdminService) GetDistributionOverview(ctx context.Context) (*service.DistributionOverview, error) {
+	return &service.DistributionOverview{}, nil
+}
+
+func (s *stubAdminService) GetDistributionFunnel(ctx context.Context) (*service.DistributionFunnel, error) {
+	return &service.DistributionFunnel{Items: []service.DistributionFunnelItem{}}, nil
+}
+
+func (s *stubAdminService) ListUserDistributionTeam(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]service.DistributionTeamMember, *pagination.PaginationResult, error) {
+	return []service.DistributionTeamMember{}, &pagination.PaginationResult{Page: params.Page, PageSize: params.PageSize, Total: 0}, nil
+}
+
+func (s *stubAdminService) ListUserDistributionCommissions(ctx context.Context, userID int64, params pagination.PaginationParams, level int) ([]service.DistributionCommissionRecord, *pagination.PaginationResult, error) {
+	return []service.DistributionCommissionRecord{}, &pagination.PaginationResult{Page: params.Page, PageSize: params.PageSize, Total: 0}, nil
+}
+
+func (s *stubAdminService) ListUserDistributionWithdrawals(ctx context.Context, userID int64, params pagination.PaginationParams, status string) ([]service.DistributionWithdrawalRequest, *pagination.PaginationResult, error) {
+	return []service.DistributionWithdrawalRequest{}, &pagination.PaginationResult{Page: params.Page, PageSize: params.PageSize, Total: 0}, nil
+}
+
+func (s *stubAdminService) ReviewUserDistributionWithdrawal(ctx context.Context, userID, withdrawalID int64, status, reviewNote string, reviewerUserID int64) (*service.DistributionWithdrawalRequest, error) {
+	return &service.DistributionWithdrawalRequest{ID: withdrawalID, UserID: userID, Status: status}, nil
+}
+
+func (s *stubAdminService) SetUserDistributionCommissionRate(ctx context.Context, userID int64, rate float64) error {
+	return nil
+}
+
+func (s *stubAdminService) GetDistributionRiskSettings(ctx context.Context) (*service.DistributionRiskSettings, error) {
+	return &service.DistributionRiskSettings{}, nil
+}
+
+func (s *stubAdminService) UpdateDistributionRiskSettings(ctx context.Context, req service.DistributionRiskSettings) (*service.DistributionRiskSettings, error) {
+	return &req, nil
 }
 
 func (s *stubAdminService) GetUserAPIKeys(ctx context.Context, userID int64, page, pageSize int) ([]service.APIKey, int64, error) {

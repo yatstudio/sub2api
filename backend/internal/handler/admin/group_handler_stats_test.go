@@ -25,6 +25,10 @@ func (s *stubGroupStatsDashboard) GetGroupStatsWithFilters(ctx context.Context, 
 	return s.stats, nil
 }
 
+func (s *stubGroupStatsDashboard) GetGroupUsageSummary(ctx context.Context, todayStart time.Time) ([]usagestats.GroupUsageSummary, error) {
+	return []usagestats.GroupUsageSummary{}, s.err
+}
+
 func TestGroupHandlerStats_IncludesUsageFromDashboardService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -32,9 +36,9 @@ func TestGroupHandlerStats_IncludesUsageFromDashboardService(t *testing.T) {
 	adminSvc := newStubAdminService()
 	dashboardSvc := &stubGroupStatsDashboard{
 		stats: []usagestats.GroupStat{{
-			GroupID:   2,
-			Requests:  42,
-			Cost:      12.34,
+			GroupID:    2,
+			Requests:   42,
+			Cost:       12.34,
 			ActualCost: 11.11,
 		}},
 	}

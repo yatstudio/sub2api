@@ -24,7 +24,16 @@ services:
   # Sub2API Application
   # ===========================================================================
   sub2api:
-    image: weishaw/sub2api:latest
+    image: sub2api:local
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        # Use images already cached from the reachable ECR mirror to avoid Docker Hub TLS timeouts on this network.
+        NODE_IMAGE: ${NODE_IMAGE:-public.ecr.aws/docker/library/node:24-alpine}
+        GOLANG_IMAGE: ${GOLANG_IMAGE:-public.ecr.aws/docker/library/golang:1.26.1-alpine}
+        ALPINE_IMAGE: ${ALPINE_IMAGE:-alpine:3.21}
+        POSTGRES_IMAGE: ${POSTGRES_IMAGE:-postgres:18-alpine}
     container_name: sub2api
     restart: unless-stopped
     ulimits:

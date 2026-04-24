@@ -42,6 +42,22 @@ type distributionWithdrawalRules struct {
 	DailyLimitAmount float64
 }
 
+type sqlTxStarter interface {
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+}
+
+func round8(v float64) float64 {
+	return math.Round(v*1e8) / 1e8
+}
+
+func beginRepositoryTx(ctx context.Context, exec sqlExecutor) (*sql.Tx, error) {
+	starter, ok := exec.(sqlTxStarter)
+	if !ok {
+		return nil, fmt.Errorf("sql executor %T does not support transactions", exec)
+	}
+	return starter.BeginTx(ctx, nil)
+}
+
 func (r *userRepository) GetDistributionProfile(ctx context.Context, userID int64) (*service.DistributionProfile, error) {
 	if err := r.ensureDistributionProfile(ctx, userID); err != nil {
 		return nil, err
@@ -855,7 +871,7 @@ func (r *userRepository) CreateDistributionWithdrawalRequest(ctx context.Context
 		return nil, err
 	}
 
-	tx, err := r.sql.BeginTx(ctx, nil)
+	tx, err := beginRepositoryTx(ctx, r.sql)
 	if err != nil {
 		return nil, err
 	}
@@ -1062,7 +1078,7 @@ func (r *userRepository) ReviewDistributionWithdrawalRequest(ctx context.Context
 		return nil, err
 	}
 
-	tx, err := r.sql.BeginTx(ctx, nil)
+	tx, err := beginRepositoryTx(ctx, r.sql)
 	if err != nil {
 		return nil, err
 	}
@@ -1200,10 +1216,6 @@ func (r *userRepository) ApplyTopupDistributionCommission(ctx context.Context, i
 		return nil, err
 	}
 
-	round8 := func(v float64) float64 {
-		return math.Round(v*1e8) / 1e8
-	}
-
 	payouts := make([]service.DistributionCommissionBreakdown, 0, 2)
 	if level1InviterID.Valid && level1InviterID.Int64 > 0 && level1Rate.Valid && level1Rate.Float64 > 0 {
 		amount := round8(topupAmount * level1Rate.Float64)
@@ -1230,7 +1242,7 @@ func (r *userRepository) ApplyTopupDistributionCommission(ctx context.Context, i
 		return nil, nil
 	}
 
-	tx, err := r.sql.BeginTx(ctx, nil)
+	tx, err := beginRepositoryTx(ctx, r.sql)
 	if err != nil {
 		return nil, err
 	}

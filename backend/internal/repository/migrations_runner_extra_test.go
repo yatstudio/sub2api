@@ -288,6 +288,26 @@ func TestApplyMigrationsFS_SkipEmptyAndAlreadyApplied(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestExtractGooseUpMigrationSQL_ExcludesDownSection(t *testing.T) {
+	content := `-- +goose Up
+CREATE TABLE keep_me(id int);
+-- +goose Down
+DROP TABLE keep_me;`
+
+	sql := extractGooseUpMigrationSQL(content)
+
+	require.Contains(t, sql, "CREATE TABLE keep_me")
+	require.NotContains(t, sql, "DROP TABLE keep_me")
+}
+
+func TestExtractGooseUpMigrationSQL_WithoutGooseMarkersReturnsWholeContent(t *testing.T) {
+	content := "CREATE TABLE plain(id int);"
+
+	sql := extractGooseUpMigrationSQL(content)
+
+	require.Equal(t, content, sql)
+}
+
 func TestApplyMigrationsFS_ReadMigrationError(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
